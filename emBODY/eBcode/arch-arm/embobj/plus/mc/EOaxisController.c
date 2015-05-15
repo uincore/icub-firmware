@@ -593,6 +593,7 @@ extern float eo_axisController_PWM(EOaxisController *o, eObool_t *stiff)
                 eo_trajectory_Init(o->trajectory, pos, vel, 0);
                 eo_trajectory_Stop(o->trajectory, GET_AXIS_POSITION()); 
                 o->control_mode = eomc_controlmode_position;
+                eo_emsController_SetControlMode(o->axisID, eomc_controlmode_cmd_position);
             }
             
             o->interact_mode = eOmc_interactionmode_stiff;
@@ -668,6 +669,7 @@ extern float eo_axisController_PWM(EOaxisController *o, eObool_t *stiff)
                 {
                     --o->torque_wdog;
                 }
+                #ifndef EXPERIMENTAL_MOTOR_TORQUE
                 else
                 {
                     SET_BITS(o->state_mask,AC_TORQUE_SENS_FAULT); 
@@ -675,6 +677,7 @@ extern float eo_axisController_PWM(EOaxisController *o, eObool_t *stiff)
                     o->torque_ref_jnt = o->torque_ref_mot = o->torque_meas_jnt = o->torque_meas_mot = 0;
                     return 0;
                 }
+                #endif
         
                 o->torque_ref_jnt = o->torque_off + (o->stiffness*err)/1000 + o->damping*(err - o->err);
                 o->err = err;
@@ -710,6 +713,7 @@ extern float eo_axisController_PWM(EOaxisController *o, eObool_t *stiff)
             {
                 --o->torque_wdog;
             }
+            #ifndef EXPERIMENTAL_MOTOR_TORQUE
             else
             {
                 SET_BITS(o->state_mask,AC_TORQUE_SENS_FAULT);
@@ -717,6 +721,7 @@ extern float eo_axisController_PWM(EOaxisController *o, eObool_t *stiff)
                 o->torque_ref_mot = o->torque_ref_jnt = o->torque_meas_jnt = o->torque_meas_mot = 0;
                 return 0;
             }
+            #endif
             
             if (o->torque_timer)
             {

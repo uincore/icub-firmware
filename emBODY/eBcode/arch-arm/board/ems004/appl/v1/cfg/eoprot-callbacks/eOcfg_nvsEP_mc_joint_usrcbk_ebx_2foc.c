@@ -521,14 +521,15 @@ extern void eoprot_fun_UPDT_mc_joint_cmmnds_calibration(const EOnv* nv, const eO
     eOresult_t                              res;
     eOmc_jointId_t                          jxx = eoprot_ID2index(rd->id32);
     eOmc_calibrator_t                       *calibrator = (eOmc_calibrator_t*)nv->ram;
-    eOappTheDB_jointOrMotorCanLocation_t    canLoc = {.emscanport = eOcanport1, .addr = 0, .indexinsidecanboard = eo_icubCanProto_jm_index_first};
+    //eOappTheDB_jointOrMotorCanLocation_t    canLoc = {.emscanport = eOcanport1, .addr = 0, .indexinsidecanboard = eo_icubCanProto_jm_index_first};
     
     #ifdef EXPERIMENTAL_SPEED_CONTROL
-    icubCanProto_controlmode_t              controlmode_2foc = icubCanProto_controlmode_velocity;
+    //icubCanProto_controlmode_t              controlmode_2foc = icubCanProto_controlmode_velocity;
     #else
-    icubCanProto_controlmode_t              controlmode_2foc = icubCanProto_controlmode_openloop;
+    //icubCanProto_controlmode_t              controlmode_2foc = icubCanProto_controlmode_openloop;
     #endif
     
+    /*
     eOicubCanProto_msgDestination_t         msgdest;
     eOicubCanProto_msgCommand_t             msgCmd = 
     {
@@ -549,21 +550,22 @@ extern void eoprot_fun_UPDT_mc_joint_cmmnds_calibration(const EOnv* nv, const eO
     //set destination of all messages 
     msgdest.dest = ICUBCANPROTO_MSGDEST_CREATE(canLoc.indexinsidecanboard, canLoc.addr);
     
-    msgCmd.cmdId = ICUBCANPROTO_POL_MC_CMD__ENABLE_PWM_PAD;
-    eo_appCanSP_SendCmd(appCanSP_ptr, (eOcanport_t)canLoc.emscanport, msgdest, msgCmd, NULL);
+    //msgCmd.cmdId = ICUBCANPROTO_POL_MC_CMD__ENABLE_PWM_PAD;
+    //eo_appCanSP_SendCmd(appCanSP_ptr, (eOcanport_t)canLoc.emscanport, msgdest, msgCmd, NULL);
 
-    msgCmd.cmdId = ICUBCANPROTO_POL_MC_CMD__CONTROLLER_RUN;
-    eo_appCanSP_SendCmd(appCanSP_ptr, (eOcanport_t)canLoc.emscanport, msgdest, msgCmd, NULL);
+    //msgCmd.cmdId = ICUBCANPROTO_POL_MC_CMD__CONTROLLER_RUN;
+    //eo_appCanSP_SendCmd(appCanSP_ptr, (eOcanport_t)canLoc.emscanport, msgdest, msgCmd, NULL);
     
-    msgCmd.cmdId = ICUBCANPROTO_POL_MC_CMD__SET_CONTROL_MODE;
-    eo_appCanSP_SendCmd(appCanSP_ptr, (eOcanport_t)canLoc.emscanport, msgdest, msgCmd, &controlmode_2foc);
+    //msgCmd.cmdId = ICUBCANPROTO_POL_MC_CMD__SET_CONTROL_MODE;
+    //eo_appCanSP_SendCmd(appCanSP_ptr, (eOcanport_t)canLoc.emscanport, msgdest, msgCmd, &controlmode_2foc);
+    */
     
-
-
     eo_emsController_StartCalibration(jxx, 
                                       calibrator->params.type3.position, 
                                       calibrator->params.type3.velocity,
                                       calibrator->params.type3.offset);
+    
+    //set_2FOC_running(jxx);
 }
 
 extern void eoprot_fun_UPDT_mc_joint_cmmnds_controlmode(const EOnv* nv, const eOropdescriptor_t* rd)
