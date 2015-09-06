@@ -114,6 +114,8 @@ extern EOaxisController* eo_axisController_New(uint8_t id)
         o->tcFilterType  = 3;
 
         o->err = 0;
+        o->vel_raw = 0;
+        o->time_raw = 0;
         
         o->position = 0;
         o->velocity = 0;
@@ -405,9 +407,22 @@ extern eObool_t eo_axisController_SetPosRaw(EOaxisController *o, int32_t pos)
     if (NOT_READY()) return eobool_false;
     
     if (o->control_mode != eomc_controlmode_direct) return eobool_false;
-
+    
+    if (o->time_raw > 25)
+    {
+        o->vel_raw = 0;
+    }
+    else
+    {
+        o->vel_raw = 38*(pos - eo_trajectory_GetPos(o->trajectory));
+        
+        if (o->time_raw) o->vel_raw /= o->time_raw;
+    }
+    
+    o->time_raw = 0;
+    
     eo_trajectory_SetPosRaw(o->trajectory, pos);
-
+    
     return eobool_true;
 }
 
@@ -523,6 +538,8 @@ extern eObool_t eo_axisController_SetControlMode(EOaxisController *o, eOmc_contr
         o->torque_ref_jnt = 0;
         o->torque_ref_mot = 0;
         o->err = 0;
+        o->vel_raw = 0;
+        o->time_raw = 26;
         return eobool_true;
     
     case eomc_controlmode_cmd_position:
@@ -703,6 +720,7 @@ extern float eo_axisController_PWM(EOaxisController *o, eObool_t *stiff)
             }
             
         case eomc_controlmode_direct:
+            if (o->time_raw < 25) ++(o->time_raw);
         case eomc_controlmode_position:
         {
             float pos_ref;
@@ -719,11 +737,15 @@ extern float eo_axisController_PWM(EOaxisController *o, eObool_t *stiff)
                 
                 o->err = err;
                 
-                //return eo_pid_PWM_piv(o->pidP, o->err, vel_ref-vel);
-                
-                #ifdef EXPERIMENTAL_SPEED_CONTROL
-                return (0.04f*vel_ref+0.2f*(float)err);
-                //return eo_pid_experimentalPWM(o->pidP, (float)err, vel_ref);
+                #ifdef EXPERIMENTAL_SPEED_CONTROL         
+                if (eo_trajectory_IsDone(o->trajectory))
+                {
+                    return 0.038f*(float)(5*err)+(float)(o->vel_raw);
+                }
+                else
+                {
+                    return 0.039f*(vel_ref+(float)(5*err));
+                }
                 #else
                 return eo_pid_PWM_pid(o->pidP, o->err);
                 #endif
@@ -744,6 +766,18 @@ extern float eo_axisController_PWM(EOaxisController *o, eObool_t *stiff)
                     return 0;
                 }
         
+                #ifdef EXPERIMENTAL_SPEED_CONTROL
+                
+                eo_emsController_GetDecoupledMeasuredTorque (o->axisID,&o->torque_meas_mot);
+                
+                int32_t displacement = o->stiffness ? (1000*o->torque_meas_mot/o->stiffness) : 0;
+                
+                o->err = err;
+                
+                return (0.038f*vel_ref+0.25f*(float)(err+displacement));
+                
+                #else
+                
                 o->torque_ref_jnt = o->torque_off + (o->stiffness*err)/1000 + o->damping*(err - o->err);
                 o->err = err;
                 
@@ -764,8 +798,9 @@ extern float eo_axisController_PWM(EOaxisController *o, eObool_t *stiff)
                         //invalid tcFilterType, do not use it
                         pwm_out = 0;
                     }
-                
                 return pwm_out;
+                
+                #endif
             }
         }
         case eomc_controlmode_torque:
@@ -800,6 +835,12 @@ extern float eo_axisController_PWM(EOaxisController *o, eObool_t *stiff)
             eo_emsController_GetDecoupledMeasuredTorque (o->axisID,&o->torque_meas_mot);
             eo_emsController_GetDecoupledReferenceTorque(o->axisID,&o->torque_ref_mot);
             
+            #ifdef EXPERIMENTAL_SPEED_CONTROL
+            
+            float pwm_out = (0.0001f*(float)o->damping)*(o->torque_meas_mot-o->torque_off);
+            
+            #else
+            
             float pwm_out = 0;
             if      (o->tcFilterType==3) 
                 pwm_out = eo_pid_PWM_pi_3_0Hz_1stLPF(o->pidT, o->torque_ref_mot, o->torque_meas_mot);
@@ -814,7 +855,8 @@ extern float eo_axisController_PWM(EOaxisController *o, eObool_t *stiff)
                     //invalid tcFilterType, do not use it
                     pwm_out = 0;
                 }
-            
+            #endif
+                
             return pwm_out;
         } 
     }

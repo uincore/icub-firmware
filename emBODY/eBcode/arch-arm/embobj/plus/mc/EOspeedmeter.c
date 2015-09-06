@@ -236,10 +236,7 @@ extern int32_t eo_absCalibratedEncoder_Acquire(EOabsCalibratedEncoder* o, int32_
                 o->delta = delta;
                 
                 o->distance += delta;
-                //if (inc)
-                //{
-                //    o->distance += inc;
-                //}
+                //o->distance += inc;
                 
                 #ifndef USE_2FOC_FAST_ENCODER
                 //o->velocity = (7*o->velocity + o->sign*EMS_FREQUENCY_INT32*inc) >> 3;
@@ -316,7 +313,7 @@ extern void eo_axleVirtualEncoder_Acquire(int32_t gearbox_reduction, EOaxleVirtu
     
     o->axle_abs_pos = axle_abs_pos;
     
-    o->velocity = + axle_virt_vel;    
+    o->velocity = axle_virt_vel;    
     o->axle_inc_pos += axle_virt_pos - o->axle_virt_pos;
   
     o->axle_inc_pos -= inc*gearbox_reduction;
