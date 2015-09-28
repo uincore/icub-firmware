@@ -115,7 +115,7 @@ extern EOaxisController* eo_axisController_New(uint8_t id)
 
         o->err = 0;
         o->vel_raw = 0;
-        o->time_raw = 0;
+        o->time_raw = 100;
         
         o->position = 0;
         o->velocity = 0;
@@ -408,15 +408,17 @@ extern eObool_t eo_axisController_SetPosRaw(EOaxisController *o, int32_t pos)
     
     if (o->control_mode != eomc_controlmode_direct) return eobool_false;
     
+    int32_t vel_raw = 38*(pos - eo_trajectory_GetPos(o->trajectory));
+        
     if (o->time_raw > 25)
     {
-        o->vel_raw = 0;
+        o->vel_raw = vel_raw / 10;
     }
     else
     {
-        o->vel_raw = 38*(pos - eo_trajectory_GetPos(o->trajectory));
-        
-        if (o->time_raw) o->vel_raw /= o->time_raw;
+        //if (o->time_raw) vel_raw /= o->time_raw;
+        //o->vel_raw = (o->vel_raw + vel_raw) / 2;
+        o->vel_raw = vel_raw / 10;
     }
     
     o->time_raw = 0;
@@ -539,7 +541,7 @@ extern eObool_t eo_axisController_SetControlMode(EOaxisController *o, eOmc_contr
         o->torque_ref_mot = 0;
         o->err = 0;
         o->vel_raw = 0;
-        o->time_raw = 26;
+        o->time_raw = 100;
         return eobool_true;
     
     case eomc_controlmode_cmd_position:
@@ -720,7 +722,15 @@ extern float eo_axisController_PWM(EOaxisController *o, eObool_t *stiff)
             }
             
         case eomc_controlmode_direct:
-            if (o->time_raw < 25) ++(o->time_raw);
+            if (o->time_raw <= 25)
+            {
+                ++(o->time_raw);
+            }
+            else
+            {
+                o->vel_raw = 0;
+            }
+            
         case eomc_controlmode_position:
         {
             float pos_ref;
@@ -737,14 +747,21 @@ extern float eo_axisController_PWM(EOaxisController *o, eObool_t *stiff)
                 
                 o->err = err;
                 
-                #ifdef EXPERIMENTAL_SPEED_CONTROL         
-                if (eo_trajectory_IsDone(o->trajectory))
+                #ifdef EXPERIMENTAL_SPEED_CONTROL
+                if (o->control_mode == eomc_controlmode_direct)
                 {
-                    return 0.038f*(float)(5*err)+(float)(o->vel_raw);
+                    return 0.039f*(float)(5*err)+(float)(o->vel_raw);
                 }
                 else
                 {
-                    return 0.039f*(vel_ref+(float)(5*err));
+                    if (eo_trajectory_IsDone(o->trajectory))
+                    {
+                        return 0.039f*(float)(5*err);
+                    }
+                    else
+                    {
+                        return 0.039f*(vel_ref+(float)(5*err));
+                    }
                 }
                 #else
                 return eo_pid_PWM_pid(o->pidP, o->err);
