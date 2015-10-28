@@ -43,7 +43,8 @@ typedef enum
     emscontroller_board_HEAD_neckpitch_neckroll = 5,
     emscontroller_board_HEAD_neckyaw_eyes       = 6,
     emscontroller_board_HEAD_eyelids_jaw        = 7,
-    emscontroller_board_HEAD_lips               = 8
+    emscontroller_board_HEAD_lips               = 8,
+    emscontroller_board_CER_WAIST               = 9
 } eOemscontroller_board_t;
 
 

@@ -27,6 +27,9 @@
 #include "string.h"
 #include "stdio.h"
 #include "string.h"
+
+#include "EOemsControllerCfg.h"
+
 #include "EoCommon.h"
 #include "EOarray.h"
 #include "EOtheErrorManager.h"
@@ -395,7 +398,9 @@ static void s_taskDO_activity_2foc(EOMtheEMSrunner *p)
     uint8_t             							error_mask = 0;
 
     uint8_t numofjomos = eo_entities_NumOfJoints(eo_entities_GetHandle());
-        
+   
+#ifndef USE_ONLY_QE
+    
     uint8_t spistream0 = 0;
     uint8_t spistream1 = 0;
     
@@ -435,7 +440,9 @@ static void s_taskDO_activity_2foc(EOMtheEMSrunner *p)
 
     // Restart the reading of the encoders
     eo_appEncReader_StartRead(app_enc_reader);
-		
+
+#endif // USE_ONLY_QE
+    
     eo_emsController_AcquireAbsEncoders((int32_t*)encvalue, error_mask);
     
     eo_emsController_CheckFaults();

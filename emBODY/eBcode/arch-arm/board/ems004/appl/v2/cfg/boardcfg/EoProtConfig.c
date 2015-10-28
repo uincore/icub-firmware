@@ -182,11 +182,7 @@
         {           
             .endpoint           = eoprot_endpoint_motioncontrol,
             .numberofentities  = {4, 4, 1, 0, 0, 0, 0}     
-        },     
-        {        
-            .endpoint           = eoprot_endpoint_analogsensors,
-            .numberofentities  = {0, 0, 1, 0, 0, 0, 0}        
-        }      
+        }   
     };
 
 

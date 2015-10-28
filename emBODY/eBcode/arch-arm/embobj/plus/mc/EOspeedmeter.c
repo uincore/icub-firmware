@@ -323,13 +323,10 @@ extern void eo_axleVirtualEncoder_Acquire(int32_t gearbox_reduction, EOaxleVirtu
                         
     LIMIT(o->axle_inc_pos, N_BITS_PRECISION_BOUND);
     
-    #ifdef USE_4BIT_INC_ENC_PRECISION
     #ifdef USE_ONLY_QE
     o->position = axle_virt_pos/gearbox_reduction;
     #else
-    o->position = axle_abs_pos + o->axle_inc_pos/gearbox_reduction;
-    #endif
-    #else
+    //o->position = axle_abs_pos + o->axle_inc_pos/gearbox_reduction;
     o->position = axle_abs_pos;
     #endif
     

@@ -25,8 +25,7 @@ extern "C" {
 //#define EXPERIMENTAL_MOTOR_TORQUE
 //#define EXPERIMENTAL_SPEED_CONTROL
 
-//#define USE_ONLY_QE
-//#define USE_4BIT_INC_ENC_PRECISION
+#define USE_ONLY_QE
     
 //#define SHOULDER_3rd_JOINT_COUPLING
 //#define USE_JACOBIAN
@@ -44,11 +43,8 @@ extern "C" {
 #if defined(HEAD_V3)
     #undef USE_2FOC_FAST_ENCODER
 #endif
+    
 //#warning in v3 fare in modo che NON venga definito USE_2FOC_FAST_ENCODER 
-
-#ifdef USE_2FOC_FAST_ENCODER
-//#define USE_4BIT_INC_ENC_PRECISION
-#endif
 
 #define EMS_PERIOD           0.001f
 #define EMS_FREQUENCY_INT32  1000
@@ -63,7 +59,7 @@ extern "C" {
 #define TORQUE_SENSOR_TIMEOUT     100 // cycles
 #define ENCODER_TIMEOUT            50 // cycles
 
-#define NOMINAL_CURRENT     10000
+#define NOMINAL_CURRENT     30000
 
 #define MAX_NAXLES 4
 
