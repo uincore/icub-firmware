@@ -26,7 +26,7 @@ extern "C" {
 //#define EXPERIMENTAL_SPEED_CONTROL
 
 #define USE_ONLY_QE
-    
+
 //#define SHOULDER_3rd_JOINT_COUPLING
 //#define USE_JACOBIAN
 
@@ -43,7 +43,6 @@ extern "C" {
 #if defined(HEAD_V3)
     #undef USE_2FOC_FAST_ENCODER
 #endif
-    
 //#warning in v3 fare in modo che NON venga definito USE_2FOC_FAST_ENCODER 
 
 #define EMS_PERIOD           0.001f

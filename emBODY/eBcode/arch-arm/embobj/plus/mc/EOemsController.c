@@ -537,39 +537,21 @@ extern void eo_emsController_PWM(int16_t* pwm_motor_16)
         int32_t rho0= ems->axis_controller[0]->position;
         int32_t rho1= ems->axis_controller[1]->position;
         int32_t rho2= ems->axis_controller[2]->position;
-    
+        
         if (rho0*rho0+rho1*rho1+rho2*rho2-rho0*rho1-rho1*rho2-rho2*rho0>400000) // 25 deg limit
         {
-            if ((rho0 <= rho1 || rho0 <= rho2) && pwm_joint[0]<0.f)
+            if ( !(rho0 <= rho1 && rho0 <= rho2 && pwm_joint[0]>0.f) && !(rho0 >= rho1 && rho0 >= rho2 && pwm_joint[0]<0.f))
             {
-                eo_axisController_Stop(ems->axis_controller[0]);
                 pwm_joint[0] = 0.f;
             }
-            else if ((rho0 >= rho1 || rho0 >= rho2) && pwm_joint[0]>0.f)
+            
+            if ( !(rho1 <= rho2 && rho1 <= rho0 && pwm_joint[1]>0.f) && !(rho1 >= rho2 && rho1 >= rho0 && pwm_joint[1]<0.f))
             {
-                eo_axisController_Stop(ems->axis_controller[0]);
-                pwm_joint[0] = 0.f;
-            }
-        
-            if ((rho1 <= rho2 || rho1 <= rho0) && pwm_joint[1]<0.f)
-            {
-                eo_axisController_Stop(ems->axis_controller[1]);
                 pwm_joint[1] = 0.f;
             }
-            else if ((rho1 >= rho2 || rho1 >= rho0) && pwm_joint[1]>0.f)
+            
+            if ( !(rho2 <= rho0 && rho2 <= rho1 && pwm_joint[2]>0.f) && !(rho2 >= rho0 && rho2 >= rho1 && pwm_joint[2]<0.f))
             {
-                eo_axisController_Stop(ems->axis_controller[1]);
-                pwm_joint[1] = 0.f;
-            }
-        
-            if ((rho2 <= rho0 || rho2 <= rho1) && pwm_joint[2]<0.f)
-            {
-                eo_axisController_Stop(ems->axis_controller[2]);
-                pwm_joint[2] = 0.f;
-            }
-            else if ((rho2 >= rho0 || rho2 >= rho1) && pwm_joint[2]>0.f)
-            {
-                eo_axisController_Stop(ems->axis_controller[2]);
                 pwm_joint[2] = 0.f;
             }
         }

@@ -649,10 +649,10 @@ static void s_eo_emsapplBody_encodersReader_init(EOtheEMSapplBody *p)
     cfg.SPI_callbackOnLastRead = NULL;
     cfg.SPI_callback_arg = NULL;
     
-    p->appEncReader = NULL; //eo_appEncReader_New(&cfg);
+    p->appEncReader = eo_appEncReader_New(&cfg);
 
-//    eo_errman_Assert(eo_errman_GetHandle(), (NULL != p->appEncReader), 
-//                     "error in appEncReader_New", s_eobj_ownname, &eo_errman_DescrTobedecided);
+    eo_errman_Assert(eo_errman_GetHandle(), (NULL != p->appEncReader), 
+                     "error in appEncReader_New", s_eobj_ownname, &eo_errman_DescrTobedecided);
 
 }
 
