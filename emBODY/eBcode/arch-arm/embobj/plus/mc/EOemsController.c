@@ -487,7 +487,11 @@ extern void eo_emsController_AcquireAbsEncoders(int32_t *abs_enc_pos, uint8_t er
     JOINTS(j)
     {
         #ifdef USE_2FOC_FAST_ENCODER
+            #ifdef EXPERIMENTAL_SPEED_CONTROL
+            eo_axleVirtualEncoder_Acquire(ems->motor_config_gearbox_ratio[j], ems->axle_virt_encoder[j], axle_abs_pos[j], axle_virt_pos[0], axle_virt_vel[j]);
+            #else
             eo_axleVirtualEncoder_Acquire(ems->motor_config_gearbox_ratio[j], ems->axle_virt_encoder[j], axle_abs_pos[j], axle_virt_pos[j], axle_virt_vel[j]);
+            #endif
             eo_axisController_SetEncPos(ems->axis_controller[j], eo_axleVirtualEncoder_GetPos(ems->axle_virt_encoder[j]));
             eo_axisController_SetEncVel(ems->axis_controller[j], eo_axleVirtualEncoder_GetVel(ems->axle_virt_encoder[j]));
         #else
@@ -570,6 +574,11 @@ extern void eo_emsController_PWM(int16_t* pwm_motor_16)
         int32_t pos = ems->axis_controller[j]->position;
         if (pos <  ems->axis_controller[j]->pos_min)
         {
+            #ifdef EXPERIMENTAL_SPEED_CONTROL
+            
+                if (pwm_joint[j]<0) pwm_joint[j] = 0;
+            
+            #else
             float pwm_lim = eo_pid_PWM_p( ems->axis_controller[j]->pidP, ems->axis_controller[j]->pos_min - pos);
             if ((pwm_lim > 0) ^ (pwm_joint[j] > pwm_lim)) 
             {
@@ -577,9 +586,15 @@ extern void eo_emsController_PWM(int16_t* pwm_motor_16)
                for (int8_t k; k<ems->naxles; k++)
                    torque_protection[k] = eobool_true; //put in protection all motors
             }
+            #endif
         }
         else if (pos >  ems->axis_controller[j]->pos_max)
         {
+            #ifdef EXPERIMENTAL_SPEED_CONTROL
+            
+                if (pwm_joint[j]>0) pwm_joint[j] = 0;
+            
+            #else
             float pwm_lim = eo_pid_PWM_p( ems->axis_controller[j]->pidP,  ems->axis_controller[j]->pos_max - pos);
             if ((pwm_lim > 0) ^ (pwm_joint[j] > pwm_lim))
             {
@@ -587,6 +602,7 @@ extern void eo_emsController_PWM(int16_t* pwm_motor_16)
                for (int8_t k; k<ems->naxles; k++)
                    torque_protection[k] = eobool_true; //put in protection all motors
             }
+            #endif
         }
       }
     }
@@ -595,12 +611,14 @@ extern void eo_emsController_PWM(int16_t* pwm_motor_16)
     float pwm_motor[MAX_NAXLES];
     eo_motors_decouple_PWM(ems->motors, pwm_joint, pwm_motor, stiffness);
     
+    #ifndef EXPERIMENTAL_SPEED_CONTROL
     //Friction compensation after joints decoupling
     MOTORS(m)
     {
         if (!torque_protection[m])
             pwm_motor[m] = eo_axisController_FrictionCompensation(ems->axis_controller[m],pwm_motor[m],ems->motor_velocity[m]);
     }
+    #endif
     
     MOTORS(m) LIMIT(pwm_motor[m], NOMINAL_CURRENT);
     
