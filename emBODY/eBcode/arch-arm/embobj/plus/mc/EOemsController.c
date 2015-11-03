@@ -542,22 +542,48 @@ extern void eo_emsController_PWM(int16_t* pwm_motor_16)
         int32_t rho1= ems->axis_controller[1]->position;
         int32_t rho2= ems->axis_controller[2]->position;
         
+        static char stuck0 = 0;
+        static char stuck1 = 0;
+        static char stuck2 = 0;
+        
         if (rho0*rho0+rho1*rho1+rho2*rho2-rho0*rho1-rho1*rho2-rho2*rho0>400000) // 25 deg limit
         {
-            if ( !(rho0 <= rho1 && rho0 <= rho2 && pwm_joint[0]>0.f) && !(rho0 >= rho1 && rho0 >= rho2 && pwm_joint[0]<0.f))
+            if ( !(rho0 <= rho1 && rho0 <= rho2 && pwm_joint[0]>=0.f) && !(rho0 >= rho1 && rho0 >= rho2 && pwm_joint[0]<=0.f))
             {
                 pwm_joint[0] = 0.f;
+                
+                if (!stuck0)
+                {
+                    stuck0 = 1;
+                    eo_axisController_Stop(ems->axis_controller[0]);
+                }
             }
             
-            if ( !(rho1 <= rho2 && rho1 <= rho0 && pwm_joint[1]>0.f) && !(rho1 >= rho2 && rho1 >= rho0 && pwm_joint[1]<0.f))
+            if ( !(rho1 <= rho2 && rho1 <= rho0 && pwm_joint[1]>=0.f) && !(rho1 >= rho2 && rho1 >= rho0 && pwm_joint[1]<=0.f))
             {
                 pwm_joint[1] = 0.f;
+                
+                if (!stuck1)
+                {
+                    stuck1 = 1;
+                    eo_axisController_Stop(ems->axis_controller[1]);
+                }
             }
             
-            if ( !(rho2 <= rho0 && rho2 <= rho1 && pwm_joint[2]>0.f) && !(rho2 >= rho0 && rho2 >= rho1 && pwm_joint[2]<0.f))
+            if ( !(rho2 <= rho0 && rho2 <= rho1 && pwm_joint[2]>=0.f) && !(rho2 >= rho0 && rho2 >= rho1 && pwm_joint[2]<=0.f))
             {
                 pwm_joint[2] = 0.f;
+                
+                if (!stuck2)
+                {
+                    stuck2 = 1;
+                    eo_axisController_Stop(ems->axis_controller[2]);
+                }
             }
+        }
+        else
+        {
+            stuck0 = stuck1 = stuck2 = 0;
         }
     }
     
