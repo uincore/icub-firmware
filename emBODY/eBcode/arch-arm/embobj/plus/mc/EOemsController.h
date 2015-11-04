@@ -136,6 +136,8 @@ extern void eo_emsController_GetDecoupledMeasuredTorque (uint8_t joint, int32_t 
 extern void eo_emsController_GetDecoupledReferenceTorque (uint8_t joint, int32_t * Trq);
 extern void eo_emsMotorController_GoIdle(void);
 
+extern eObool_t eo_emsMotorController_isMotorEncoderCalibrated(uint8_t motor);    
+
 /** @}            
     end of group eo_emsController  
  **/

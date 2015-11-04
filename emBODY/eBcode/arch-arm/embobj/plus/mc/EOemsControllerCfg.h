@@ -23,7 +23,7 @@ extern "C" {
  
 //#define FORCE_ZERO_PWM_OUT
 //#define EXPERIMENTAL_MOTOR_TORQUE
-//#define EXPERIMENTAL_SPEED_CONTROL
+#define EXPERIMENTAL_SPEED_CONTROL
 #define USE_ONLY_QE
 
 //#define SHOULDER_3rd_JOINT_COUPLING
@@ -57,7 +57,7 @@ extern "C" {
 #define TORQUE_SENSOR_TIMEOUT     100 // cycles
 #define ENCODER_TIMEOUT            50 // cycles
 
-#define NOMINAL_CURRENT     30000
+#define NOMINAL_CURRENT     10000 //30000
 
 #define MAX_NAXLES 4
 

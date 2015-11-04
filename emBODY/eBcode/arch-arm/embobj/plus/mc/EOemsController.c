@@ -1002,6 +1002,13 @@ extern void eo_emsController_ResetPosPid(uint8_t joint)
     if (ems) eo_pid_Reset(eo_axisController_GetPosPidPtr(ems->axis_controller[joint]));
 }
 
+extern eObool_t eo_emsMotorController_isMotorEncoderCalibrated(uint8_t motor)
+{
+    if (!ems) return eobool_false;
+    
+    return eo_motors_isEncCalibrated(ems->motors, motor);
+}
+
 extern void eo_emsController_StartCalibration_type3(uint8_t joint, int32_t pos, int32_t vel, int32_t offset)
 {
     if (!ems) return;
@@ -1119,12 +1126,12 @@ extern void eo_emsController_CheckCalibrations(void)
             set_2FOC_running(1);
             set_2FOC_running(2);
             
-            eo_axisController_SetControlMode(ems->axis_controller[0], eomc_controlmode_cmd_position);
-            eo_axisController_SetInteractionMode(ems->axis_controller[0], eOmc_interactionmode_stiff);
-            eo_axisController_SetControlMode(ems->axis_controller[1], eomc_controlmode_cmd_position);
-            eo_axisController_SetInteractionMode(ems->axis_controller[1], eOmc_interactionmode_stiff);
-            eo_axisController_SetControlMode(ems->axis_controller[2], eomc_controlmode_cmd_position);
-            eo_axisController_SetInteractionMode(ems->axis_controller[2], eOmc_interactionmode_stiff);
+            //eo_axisController_SetControlMode(ems->axis_controller[0], eomc_controlmode_cmd_position);
+            //eo_axisController_SetInteractionMode(ems->axis_controller[0], eOmc_interactionmode_stiff);
+            //eo_axisController_SetControlMode(ems->axis_controller[1], eomc_controlmode_cmd_position);
+            //eo_axisController_SetInteractionMode(ems->axis_controller[1], eOmc_interactionmode_stiff);
+            //eo_axisController_SetControlMode(ems->axis_controller[2], eomc_controlmode_cmd_position);
+            //eo_axisController_SetInteractionMode(ems->axis_controller[2], eOmc_interactionmode_stiff);
         }
   
         if (ems->board == emscontroller_board_SHOULDER || ems->board == emscontroller_board_CER_WAIST)

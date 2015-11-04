@@ -150,7 +150,8 @@ extern void eo_axisController_StartCalibration_type3(EOaxisController *o)
     }
     
     SET_BITS(o->state_mask, AC_NOT_CALIBRATED);
-    //o->control_mode = eomc_controlmode_calib;
+    
+    o->control_mode = eomc_controlmode_calib;
 }
 
 extern void eo_axisController_StartCalibration_type0(EOaxisController *o, int16_t pwmlimit, int16_t vel)
@@ -668,22 +669,25 @@ extern float eo_axisController_PWM(EOaxisController *o, eObool_t *stiff)
                     return o->pwm_limit_calib;
                 }
             }
-            /*
-            else if (o->calibration_type == eomc_calibration_type3_abs_sens_digital)
+            else if (o->calibration_type == eomc_calibration_type3_abs_sens_digital 
+                  || o->calibration_type ==  eomc_calibration_type8_linear_actuators)
             {
-                if (IS_CALIBRATED())
+                o->interact_mode = eOmc_interactionmode_stiff;
+                *stiff = eobool_true;
+                o->err = 0;
+                
+                if (IS_CALIBRATED() && eo_emsMotorController_isMotorEncoderCalibrated(o->axisID))
                 {
                     eo_pid_Reset(o->pidP);
                     eo_trajectory_Init(o->trajectory, pos, vel, 0);
                     eo_trajectory_Stop(o->trajectory, GET_AXIS_POSITION()); 
-                    o->control_mode = eomc_controlmode_position;
+                    eo_axisController_SetControlMode(o, eomc_controlmode_cmd_position);
+                    eo_axisController_SetInteractionMode(o, eOmc_interactionmode_stiff);
                 }
-                o->interact_mode = eOmc_interactionmode_stiff;
-                *stiff = eobool_true;
-                o->err = 0;
+             
                 return 0;
             }
-            */
+            
             return 0;
         }
         case eomc_controlmode_idle:
