@@ -669,14 +669,13 @@ extern float eo_axisController_PWM(EOaxisController *o, eObool_t *stiff)
                     return o->pwm_limit_calib;
                 }
             }
-            else if (o->calibration_type == eomc_calibration_type3_abs_sens_digital 
-                  || o->calibration_type ==  eomc_calibration_type8_linear_actuators)
+            else if (o->calibration_type == eomc_calibration_type3_abs_sens_digital)
             {
                 o->interact_mode = eOmc_interactionmode_stiff;
                 *stiff = eobool_true;
                 o->err = 0;
                 
-                if (IS_CALIBRATED() && eo_emsMotorController_isMotorEncoderCalibrated(o->axisID))
+                if (IS_CALIBRATED())
                 {
                     eo_pid_Reset(o->pidP);
                     eo_trajectory_Init(o->trajectory, pos, vel, 0);

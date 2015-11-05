@@ -1092,13 +1092,24 @@ extern void eo_emsController_CheckCalibrations(void)
                 ems->n_calibrated++;
             }
             else if (eo_absCalibratedEncoder_IsOk(ems->abs_calib_encoder[j]))
-            {    
-                ems->n_calibrated++;
-                eo_axisController_SetCalibrated(ems->axis_controller[j]);
+            {                    
+                static eObool_t foc_running[MAX_NAXLES] = {eobool_false, eobool_false, eobool_false, eobool_false};
+            
+                if (!foc_running[j])
+                {
+                    foc_running[j] = eobool_true;
                 
-                set_2FOC_running(j);
-                eo_axisController_SetControlMode(ems->axis_controller[j], eomc_controlmode_cmd_position);
-                eo_axisController_SetInteractionMode(ems->axis_controller[j], eOmc_interactionmode_stiff);
+                    set_2FOC_running(j);
+                }
+                
+                if (eo_motors_isEncCalibrated(ems->motors, j))
+                {
+                    ems->n_calibrated++;
+            
+                    eo_axisController_SetCalibrated(ems->axis_controller[j]);
+                
+                    foc_running[j] = eobool_false;
+                }
             }
         }
     }
@@ -1116,22 +1127,29 @@ extern void eo_emsController_CheckCalibrations(void)
                  eo_absCalibratedEncoder_IsOk(ems->abs_calib_encoder[1]) &&
                  eo_absCalibratedEncoder_IsOk(ems->abs_calib_encoder[2]))
         {
-            ems->n_calibrated+=3;
+            static eObool_t foc_running = eobool_false;
             
-            eo_axisController_SetCalibrated(ems->axis_controller[0]);
-            eo_axisController_SetCalibrated(ems->axis_controller[1]);
-            eo_axisController_SetCalibrated(ems->axis_controller[2]);
+            if (!foc_running)
+            {
+                foc_running = eobool_true;
+                
+                set_2FOC_running(0);
+                set_2FOC_running(1);
+                set_2FOC_running(2);
+            }
             
-            set_2FOC_running(0);
-            set_2FOC_running(1);
-            set_2FOC_running(2);
+            if (eo_motors_isEncCalibrated(ems->motors, 0) 
+             && eo_motors_isEncCalibrated(ems->motors, 1) 
+             && eo_motors_isEncCalibrated(ems->motors, 2))
+            {
+                ems->n_calibrated+=3;
             
-            //eo_axisController_SetControlMode(ems->axis_controller[0], eomc_controlmode_cmd_position);
-            //eo_axisController_SetInteractionMode(ems->axis_controller[0], eOmc_interactionmode_stiff);
-            //eo_axisController_SetControlMode(ems->axis_controller[1], eomc_controlmode_cmd_position);
-            //eo_axisController_SetInteractionMode(ems->axis_controller[1], eOmc_interactionmode_stiff);
-            //eo_axisController_SetControlMode(ems->axis_controller[2], eomc_controlmode_cmd_position);
-            //eo_axisController_SetInteractionMode(ems->axis_controller[2], eOmc_interactionmode_stiff);
+                eo_axisController_SetCalibrated(ems->axis_controller[0]);
+                eo_axisController_SetCalibrated(ems->axis_controller[1]);
+                eo_axisController_SetCalibrated(ems->axis_controller[2]);
+                
+                foc_running = eobool_false;
+            }
         }
   
         if (ems->board == emscontroller_board_SHOULDER || ems->board == emscontroller_board_CER_WAIST)
@@ -1142,13 +1160,23 @@ extern void eo_emsController_CheckCalibrations(void)
             }
             else if (eo_absCalibratedEncoder_IsOk(ems->abs_calib_encoder[3]))
             {    
-                ems->n_calibrated++;
+                static eObool_t foc_running = eobool_false;
+            
+                if (!foc_running)
+                {
+                    foc_running = eobool_true;
                 
-                set_2FOC_running(3);
+                    set_2FOC_running(3);
+                }
                 
-                eo_axisController_SetCalibrated(ems->axis_controller[3]);
-                eo_axisController_SetControlMode(ems->axis_controller[3], eomc_controlmode_cmd_position);
-                eo_axisController_SetInteractionMode(ems->axis_controller[3], eOmc_interactionmode_stiff);
+                if (eo_motors_isEncCalibrated(ems->motors, 3))
+                {
+                    ems->n_calibrated++;
+            
+                    eo_axisController_SetCalibrated(ems->axis_controller[3]);
+                
+                    foc_running = eobool_false;
+                }
             }
         }
     }
@@ -1492,6 +1520,7 @@ void set_2FOC_running(uint8_t motor)
         descriptor.code = eoerror_code_get(eoerror_category_MotionControl, eoerror_value_MC_motor_external_fault);
         eo_errman_Error(eo_errman_GetHandle(), eo_errortype_warning, NULL, NULL, &descriptor);
         motor_fault_mask_j &= ~MOTOR_EXTERNAL_FAULT;
+        ems_fault_mask_j &= ~MOTOR_EXTERNAL_FAULT;
     }
         
     if (motor_fault_mask_j & MOTOR_OVERCURRENT_FAULT)
@@ -1642,7 +1671,7 @@ void set_2FOC_running(uint8_t motor)
         ems_fault_mask_j &= ~MOTOR_WRONG_STATE;
     }
     
-    if (ems_fault_mask_j || motor_fault_mask_j)
+    if ((ems_fault_mask_j & ~MOTOR_HARD_FAULT) || motor_fault_mask_j)
     {
         eOerrmanDescriptor_t descriptor = {0};
         descriptor.par16 = j; // unless required
