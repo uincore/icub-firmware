@@ -161,6 +161,9 @@ static void encoder_init(EOabsCalibratedEncoder* o, int32_t position, uint8_t er
 extern int32_t eo_absCalibratedEncoder_Acquire(EOabsCalibratedEncoder* o, int32_t position, uint8_t error_mask)
 {
     static const int16_t MAX_ENC_CHANGE = 7*ENCODER_QUANTIZATION;
+    static uint16_t cycle_counter = 0;
+    
+    cycle_counter++;
     
     if (!o->sign) return 0;
 	
@@ -260,19 +263,22 @@ extern int32_t eo_absCalibratedEncoder_Acquire(EOabsCalibratedEncoder* o, int32_
             }
             #endif
             
+            /*
             if (o->spikes_count > 0 )
                 o->spikes_count--;
+            */
         }
         else
         {
             o->spikes_count++;
             //we don't want to send up too many messages...
+            /*
             if ((o->spikes_count % 200) == 0)
             {
                 //message "spike encoder error"
                 eOerrmanDescriptor_t descriptor = {0};
-                descriptor.par16 = check;   // unless required
-                descriptor.par64 = 0;       // unless required
+                descriptor.par16 = check;           // unless required
+                descriptor.par64 = o->spikes_count; // unless required
                 descriptor.sourcedevice = eo_errman_sourcedevice_localboard; // 0 e' board, 1 can1, 2 can2
                 descriptor.sourceaddress = o->ID; // oppure l'id del can che ha dato errore
                 descriptor.code = eoerror_code_get(eoerror_category_MotionControl, eoerror_value_MC_aea_abs_enc_spikes);
@@ -280,10 +286,31 @@ extern int32_t eo_absCalibratedEncoder_Acquire(EOabsCalibratedEncoder* o, int32_
                 
                 //o->spikes_count = 0;
             }
-            
+
             #ifndef USE_2FOC_FAST_ENCODER
             o->velocity = (7*o->velocity) >> 3;
             #endif
+            */
+        }
+        
+        //every second
+        if (cycle_counter == 1000)
+        {
+            if (o->spikes_count > 0)
+            {                
+                //message "spike encoder error"
+                eOerrmanDescriptor_t descriptor = {0};
+                descriptor.par16 = 0;           
+                descriptor.par64 = o->spikes_count;
+                descriptor.sourcedevice = eo_errman_sourcedevice_localboard;
+                descriptor.sourceaddress = o->ID;
+                descriptor.code = eoerror_code_get(eoerror_category_MotionControl, eoerror_value_MC_aea_abs_enc_spikes);
+                eo_errman_Error(eo_errman_GetHandle(), eo_errortype_warning, NULL, NULL, &descriptor);
+                
+                o->spikes_count = 0;
+            }
+            
+            cycle_counter = 0;
         }
     }
     
