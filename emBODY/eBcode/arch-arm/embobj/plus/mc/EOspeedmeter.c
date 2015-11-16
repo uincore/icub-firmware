@@ -19,6 +19,8 @@
 #include "EoError.h"
 #include "EOtheErrorManager.h"
 #include "EOVtheSystem.h"
+
+#include "EOMtheEMSrunner.h"
 //#include "hal_led.h"
 // --------------------------------------------------------------------------------------------------------------------
 // - declaration of extern public interface
@@ -161,10 +163,9 @@ static void encoder_init(EOabsCalibratedEncoder* o, int32_t position, uint8_t er
 extern int32_t eo_absCalibratedEncoder_Acquire(EOabsCalibratedEncoder* o, int32_t position, uint8_t error_mask)
 {
     static const int16_t MAX_ENC_CHANGE = 7*ENCODER_QUANTIZATION;
-    static uint16_t cycle_counter = 0;
     
-    cycle_counter++;
-    
+    eOemsrunner_diagnosticsinfo_t* runner_info = eom_emsrunner_GetDiagnosticsInfoHandle(eom_emsrunner_GetHandle());
+        
     if (!o->sign) return 0;
 	
     if (!error_mask)
@@ -294,7 +295,7 @@ extern int32_t eo_absCalibratedEncoder_Acquire(EOabsCalibratedEncoder* o, int32_
         }
         
         //every second
-        if (cycle_counter == 1000)
+        if ((runner_info->numberofperiods % 1000) == 0)
         {
             if (o->spikes_count > 0)
             {                
@@ -309,8 +310,6 @@ extern int32_t eo_absCalibratedEncoder_Acquire(EOabsCalibratedEncoder* o, int32_
                 
                 o->spikes_count = 0;
             }
-            
-            cycle_counter = 0;
         }
     }
     
