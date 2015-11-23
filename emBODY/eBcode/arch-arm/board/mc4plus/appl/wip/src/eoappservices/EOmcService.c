@@ -977,10 +977,10 @@ extern eOresult_t s_eo_mcserv_do_mc4plus(EOmcService *p)
                  
                 //added diagnostics for test
                 eOerrmanDescriptor_t descriptor = {0};
-                descriptor.par16 = jm; // unless required
+                descriptor.par16 = 0; // unless required
                 descriptor.par64 = 0;
                 descriptor.sourcedevice = eo_errman_sourcedevice_localboard; // 0 e' board, 1 can1, 2 can2
-                descriptor.sourceaddress = 0; // oppure l'id del can che ha dato errore
+                descriptor.sourceaddress = jm; // oppure l'id del can che ha dato errore
                 descriptor.code = eoerror_code_get(eoerror_category_MotionControl, eoerror_value_MC_aea_abs_enc_invalid);
                 eo_errman_Error(eo_errman_GetHandle(), eo_errortype_error, NULL, NULL, &descriptor);
              }
