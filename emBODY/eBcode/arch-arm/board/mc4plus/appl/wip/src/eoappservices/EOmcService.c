@@ -1022,6 +1022,9 @@ extern eOresult_t s_eo_mcserv_do_mc4plus(EOmcService *p)
             }
             
             eo_emsController_GetJointStatus(jm, jstatus);
+            //test- boradcast encoder reader position
+            jstatus->basic.jnt_position = p->valuesencoder[jm];
+            
             eo_emsController_GetActivePidStatus(jm, &(jstatus->ofpid)); 
             if(transmit_decoupled_pwms) 
             {   //this functions is used to get the motor PWM after the decoupling matrix
