@@ -194,7 +194,7 @@ extern void eom_emsappl_hid_userdef_on_exit_RUN(EOMtheEMSappl* p)
     // we prefer NOT to stop it
     //eo_mais_Stop(eo_mais_GetHandle());
 
-    //#warning MERGE-> remember to stop inertials ... check if already tested in branch
+    ///////#warning MERGE-> remember to stop inertials ... check if already tested in branch
     eo_inertials_Stop(eo_inertials_GetHandle());
     
 }
@@ -228,7 +228,7 @@ extern void eom_emsappl_hid_userdef_on_entry_ERR(EOMtheEMSappl* p)
     // we prefer NOT to stop it
     //eo_mais_Stop(eo_mais_GetHandle());
 
-    //#warning MERGE-> remember to stop inertials ... check if already tested in branch
+    ///////#warning MERGE-> remember to stop inertials ... check if already tested in branch
     eo_inertials_Stop(eo_inertials_GetHandle());
 }
 
@@ -349,7 +349,7 @@ static eOprotBRD_t s_overridden_appl_get_boardnumber_fromIPaddress(void)
     }    
     ret --;
     
-//    #warning -> debug board eb1
+//    /////#warning -> debug board eb1
 //    ret = 0;
     
     return(ret);

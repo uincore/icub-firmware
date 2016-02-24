@@ -11,13 +11,17 @@
 
 #include "Controller.h"
 
-static char invert_matrix(float** M, float** I, char n);
-static void Controller_config_motor_set(Controller* o);
-static void Controller_config_encoder_set(Controller* o);
+MController* smc = NULL;
 
-Controller* Controller_new(uint8_t nJoints) //
+static char invert_matrix(float** M, float** I, char n);
+static void Controller_config_motor_set(MController* o);
+static void Controller_config_encoder_set(MController* o);
+
+MController* Controller_new(uint8_t nJoints) //
 {
-    Controller* o = NEW(Controller, 1);
+    if (!smc) smc = NEW(MController, 1);
+    
+    MController* o = smc;
 
     if (!o) return NULL;
     
@@ -80,8 +84,10 @@ Controller* Controller_new(uint8_t nJoints) //
     return o;
 }
 
-void Controller_init(Controller* o) //
+void Controller_init() //
 {
+    MController *o = smc;
+    
     if (!o) return;
     
     o->nSets = o->nJoints;
@@ -107,8 +113,18 @@ void Controller_init(Controller* o) //
     }
 }
 
-extern void Controller_config_joint(Controller* o, int j, eOmc_joint_config_t* config) //
+void Controller_config_board(uint8_t part_type, uint8_t actuation_type)
 {
+    MController *o = smc;
+    
+    o->part_type      = part_type;
+    o->actuation_type = actuation_type;
+}
+
+void Controller_config_joint(int j, eOmc_joint_config_t* config) //
+{
+    MController *o = smc;
+    
     Joint_config(o->joint+j, config);
     
     Motor_config_trqPID(o->motor+j, &(config->pidtorque));
@@ -129,20 +145,26 @@ extern void Controller_config_joint(Controller* o, int j, eOmc_joint_config_t* c
     }
 }
 
-extern void Controller_config_motor(Controller* o, int m, uint8_t hardware_type, uint8_t motor_control_type, eOmc_motor_config_t* config) //
+void Controller_config_motor(int m, uint8_t hardware_type, uint8_t motor_control_type, eOmc_motor_config_t* config) //
 {
+    MController *o = smc;
+    
     Motor_config(o->motor+m, m, hardware_type, motor_control_type, config);
 }
 
-void Controller_config_absEncoder(Controller* o, uint8_t j, int32_t resolution, int16_t spike_limit) //
+void Controller_config_absEncoder(uint8_t j, int32_t resolution, int16_t spike_limit) //
 {
+    MController *o = smc;
+    
     if (!o->absEncoder[j]) o->absEncoder[j] = AbsEncoder_new(1);
     
     AbsEncoder_config(o->absEncoder[j], j, resolution, spike_limit);
 }
 
-void Controller_config_Jjm(Controller* o, float **Jjm) //
+void Controller_config_Jjm(float **Jjm) //
 {
+    MController *o = smc;
+    
     int N = o->nJoints;
     
     for (int j=0; j<N; ++j)
@@ -210,8 +232,10 @@ void Controller_config_Jjm(Controller* o, float **Jjm) //
     Controller_config_encoder_set(o);
 }
 
-void Controller_config_Jje(Controller* o, float **Jje) //
+void Controller_config_Jje(float **Jje) //
 {
+    MController *o = smc;
+    
     int N = o->nJoints;
 
     for (int j=0; j<N; ++j)
@@ -275,45 +299,57 @@ void Controller_config_Jje(Controller* o, float **Jje) //
     Controller_config_encoder_set(o);
 }
 
-void Controller_update_joint_torque_fbk(Controller* o, uint8_t j, CTRL_UNITS trq_fbk) //
+void Controller_update_joint_torque_fbk(uint8_t j, CTRL_UNITS trq_fbk) //
 {
-    Joint_update_torque_fbk(o->joint+j, trq_fbk);
+    Joint_update_torque_fbk(smc->joint+j, trq_fbk);
 }
 
-void Controller_update_absEncoder_fbk(Controller* o, uint8_t j, int32_t position, uint8_t error_mask) //
+void Controller_update_absEncoder_fbk(uint8_t e, int32_t position) //
 {
-    AbsEncoder_update(o->absEncoder[j], position, error_mask);
+    AbsEncoder_update(smc->absEncoder[e], position);
 }
 
-int32_t Controller_get_absEncoder(Controller* o, uint8_t j)
+void Controller_invalid_absEncoder_fbk(uint8_t e) //
 {
-    return o->absEncoder[j]->distance;
+    AbsEncoder_invalid(smc->absEncoder[e]);
 }
 
-void Controller_do(Controller* o)
+void Controller_timeout_absEncoder_fbk(uint8_t e) //
 {
-    for (int s=0; s<o->nSets; ++s)
+    AbsEncoder_timeout(smc->absEncoder[e]);
+}
+
+int32_t Controller_get_absEncoder(uint8_t j)
+{
+    return smc->absEncoder[j]->distance;
+}
+
+void Controller_do()
+{
+    for (int s=0; s<smc->nSets; ++s)
     {
-        JointSet_do_odometry(o->jointSet+s);
+        JointSet_do_odometry(smc->jointSet+s);
     }
 }
 
-BOOL Controller_set_control_mode(Controller* o, uint8_t j, uint8_t control_mode) //
+BOOL Controller_set_control_mode(uint8_t j, uint8_t control_mode) //
 {
-    return JointSet_set_control_mode(o->jointSet+o->j2s[j], control_mode);
+    return JointSet_set_control_mode(smc->jointSet+smc->j2s[j], control_mode);
 }    
 
-void Controller_set_interaction_mode(Controller* o, uint8_t j, uint8_t interaction_mode) //
+void Controller_set_interaction_mode(uint8_t j, uint8_t interaction_mode) //
 {
-    JointSet_set_interaction_mode(o->jointSet+o->j2s[j], interaction_mode);
+    JointSet_set_interaction_mode(smc->jointSet+smc->j2s[j], interaction_mode);
 } 
 
 // --------------------------------------------------------------------------------------------------------------------
 // - definition of static functions 
 // --------------------------------------------------------------------------------------------------------------------
 
-static void Controller_config_motor_set(Controller* o)
+static void Controller_config_motor_set()
 {
+    MController *o = smc;
+    
     int N = o->nJoints;
     
     uint8_t set_dim[MAX_PER_BOARD];
@@ -346,8 +382,10 @@ static void Controller_config_motor_set(Controller* o)
     }
 }
 
-static void Controller_config_encoder_set(Controller* o)
+static void Controller_config_encoder_set()
 {
+    MController *o = smc;
+    
     int N = o->nJoints;
     
     uint8_t set_dim[MAX_PER_BOARD];
@@ -457,4 +495,39 @@ static char invert_matrix(float** M, float** I, char n)
     }
     
     return 1;
+}
+
+#if 0
+/** @typedef    typedef struct eOmc_calibrator32_t
+    @brief      eOmc_calibrator32_t specifies a calibrator with type and parameters for teh new definition of measures
+ **/
+typedef struct                  // size is 1+3+4*4 = 20
+{
+    eOenum08_t                  type;                               /**< use eOmc_calibration_type_t */
+    uint8_t                     filler03[3];
+    union
+    {
+        uint32_t                                                any[6];
+        eOmc_calibrator_params_type0_hard_stops_t               type0;
+        eOmc_calibrator_params_type1_abs_sens_analog_t          type1;
+        eOmc_calibrator_params_type2_hard_stops_diff_t          type2;
+        eOmc_calibrator_params_type3_abs_sens_digital_t         type3;
+        eOmc_calibrator_params_type4_abs_and_incremental_t      type4;
+        eOmc_calibrator_params_type5_hard_stops_mc4plus_t       type5;
+        eOmc_calibrator_params_type6_mais_t                     type6;
+        eOmc_calibrator_params_type7_hall_sensor_t              type7;
+        eOmc_calibration_type8_adc_and_incr_mc4plus_t           type8;
+    } params;                                                       /**< the params of the calibrator */   
+} eOmc_calibrator32_t;           EO_VERIFYsizeof(eOmc_calibrator32_t, 28);
+
+typedef eOmc_calibrator32_t eOmc_calibrator_t;
+#endif
+
+void Controller_calibrate(uint8_t e, eOmc_calibrator_t *calibrator)
+{
+    MController *o = smc;
+    
+    uint8_t s = o->e2s[e];
+    
+    JointSet_calibrate(o->jointSet+s, e, calibrator);
 }

@@ -26,7 +26,7 @@
 #include "EOtheMemoryPool.h"
 #include "EOtheMotionController.h"
 //to signal errors
-#include "EOemsController.h"
+#include "Controller.h"
 #include "EOtheErrorManager.h"
 #include "EoError.h"
 #include "EoProtocol.h"

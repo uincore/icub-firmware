@@ -107,11 +107,11 @@ void Joint_config(Joint* o, eOmc_joint_config_t* config)
     WatchDog_set_base_time_msec(&o->vel_ref_wdog, config->velocitysetpointtimeout);
     WatchDog_rearm(&o->vel_ref_wdog);
     
-    #warning *** MCR joint output max (openloop) missing ***
+    /////#warning *** MCR joint output max (openloop) missing ***
     //o->out_max = config->
-    #warning *** MCR joint torque max (openloop) missing ***
+    /////#warning *** MCR joint torque max (openloop) missing ***
     //o->trq_max = config->
-    #warning *** MCR joint admittance missing ***
+    /////#warning *** MCR joint admittance missing ***
     o->Kadmitt = ZERO;
 }
 

@@ -301,7 +301,7 @@ extern void eoprot_fun_UPDT_mn_appl_config(const EOnv* nv, const eOropdescriptor
     if(1000 != cfg->cycletime)
     {
         cfg->cycletime = 1000;
-        //#warning marco.accame: send up a warning about unsuppported feature
+        ///////#warning marco.accame: send up a warning about unsuppported feature
     }
     
     if(0 == cfg->txratedivider)

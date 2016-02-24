@@ -43,7 +43,7 @@
 
 #include "EOMtheEMStransceiver.h"
 
-#include "EOemsController.h"
+#include "Controller.h"
 
 #include "EOVtheCallbackManager.h"
 
@@ -221,7 +221,7 @@ extern eOresult_t eo_encoderreader_Deactivate(EOtheEncoderReader *p)
         return(eores_OK);        
     } 
     
-    #warning TODO: eo_encoderreader_Deactivate() must be completed. and tested. see comments below
+    /////#warning TODO: eo_encoderreader_Deactivate() must be completed. and tested. see comments below
     
     // in order to do this function we should change EOappEncReader so that it can be de-initted. 
     // even better to merge what is inside EOappEncReader into object EOtheEncoderReader 
@@ -252,7 +252,7 @@ extern eOresult_t eo_encoderreader_Activate(EOtheEncoderReader *p, const eOmn_se
         eo_encoderreader_Deactivate(p);        
     }   
  
-    #warning TODO: eo_encoderreader_Activate() should be changed. see comments below.
+    /////#warning TODO: eo_encoderreader_Activate() should be changed. see comments below.
     // since EOappEncReader can only be created, but not initted or de-inittedd, we must change it so that it can do that.
     
 

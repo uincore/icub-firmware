@@ -517,7 +517,7 @@ extern eOmeas_velocity_t eo_mc4boards_Convert_Velocity_fromCAN(EOtheMC4boards *p
 //    return((icubCanProto_velocity_t)tmp);
 //#else
 
-//    #warning --> test it: we believe that we dont need the __fabs()
+//    /////#warning --> test it: we believe that we dont need the __fabs()
 //    
 //    float impVel = (float)vel * (s_eo_themc4boards.convencoder[joint].factor); // transform from icubdeg/sec to imp/sec
 //    impVel /= (1000.0f); // transform from imp/sec to imp/ms

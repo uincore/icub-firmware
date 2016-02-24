@@ -958,36 +958,6 @@
           </GroupOption>
           <Files>
             <File>
-              <FileName>EOaxisController.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\embobj\plus\mc\EOaxisController.c</FilePath>
-            </File>
-            <File>
-              <FileName>EOdecoupler.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\embobj\plus\mc\EOdecoupler.c</FilePath>
-            </File>
-            <File>
-              <FileName>EOemsController.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\embobj\plus\mc\EOemsController.c</FilePath>
-            </File>
-            <File>
-              <FileName>EOpid.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\embobj\plus\mc\EOpid.c</FilePath>
-            </File>
-            <File>
-              <FileName>EOspeedmeter.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\embobj\plus\mc\EOspeedmeter.c</FilePath>
-            </File>
-            <File>
-              <FileName>EOtrajectory.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\embobj\plus\mc\EOtrajectory.c</FilePath>
-            </File>
-            <File>
               <FileName>AbsEncoder.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\embobj\plus\mc\AbsEncoder.c</FilePath>
@@ -2230,36 +2200,6 @@
         <Group>
           <GroupName>eo-motor-controller</GroupName>
           <Files>
-            <File>
-              <FileName>EOaxisController.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\embobj\plus\mc\EOaxisController.c</FilePath>
-            </File>
-            <File>
-              <FileName>EOdecoupler.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\embobj\plus\mc\EOdecoupler.c</FilePath>
-            </File>
-            <File>
-              <FileName>EOemsController.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\embobj\plus\mc\EOemsController.c</FilePath>
-            </File>
-            <File>
-              <FileName>EOpid.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\embobj\plus\mc\EOpid.c</FilePath>
-            </File>
-            <File>
-              <FileName>EOspeedmeter.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\embobj\plus\mc\EOspeedmeter.c</FilePath>
-            </File>
-            <File>
-              <FileName>EOtrajectory.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\embobj\plus\mc\EOtrajectory.c</FilePath>
-            </File>
             <File>
               <FileName>AbsEncoder.c</FileName>
               <FileType>1</FileType>

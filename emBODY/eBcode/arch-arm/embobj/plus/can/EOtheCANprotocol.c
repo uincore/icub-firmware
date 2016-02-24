@@ -1367,7 +1367,7 @@ static eOresult_t s_eo_canprot_parse0length(eOcanframe_t *frame, eOcanport_t por
 //static eOresult_t s_eo_canprot_search4exceptions(eOcanframe_t *frame, eOcanport_t port)
 //{
 //    // in here is put ok only if we find an exception    
-//     #warning -> marco.accame: in eo_canprot_Parse() u must consider also the case of mais error. it is an illegal frame, thus maybe we do it only if the following cannot be done.
+//     /////#warning -> marco.accame: in eo_canprot_Parse() u must consider also the case of mais error. it is an illegal frame, thus maybe we do it only if the following cannot be done.
 //    
 //    // if we find an exception, then found is 
 //    return(eores_OK);

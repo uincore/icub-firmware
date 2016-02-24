@@ -619,7 +619,7 @@ static eOresult_t s_eom_task_isr_set_event(EOVtaskDerived *t, eOevent_t evt)
     // ok, get back my type.
     EOMtask *mtsk = (EOMtask *)t;
     
-//    #warning: we could remove teh check vs argument not NULL, as long as it is called correctly
+//    /////#warning: we could remove teh check vs argument not NULL, as long as it is called correctly
 //    if(NULL == mtsk) 
 //    {
 //        return(eores_NOK_nullpointer);
@@ -636,7 +636,7 @@ static eOresult_t s_eom_task_tsk_set_event(EOVtaskDerived *t, eOevent_t evt)
     // ok, get back my type.
     EOMtask *mtsk = (EOMtask *)t;
 
-//    #warning: we could remove teh check vs argument not NULL, as long as it is called correctly    
+//    /////#warning: we could remove teh check vs argument not NULL, as long as it is called correctly    
 //    if(NULL == mtsk) 
 //    {
 //        return(eores_NOK_nullpointer);
@@ -653,7 +653,7 @@ static eOresult_t s_eom_task_isr_send_message(EOVtaskDerived *t, eOmessage_t msg
     // ok, get back my type.
     EOMtask *mtsk = (EOMtask *)t;
 
-//    #warning: we could remove teh check vs argument not NULL, as long as it is called correctly     
+//    /////#warning: we could remove teh check vs argument not NULL, as long as it is called correctly     
 //    if(NULL == mtsk) 
 //    {
 //        return(eores_NOK_nullpointer);
@@ -673,7 +673,7 @@ static eOresult_t s_eom_task_tsk_send_message(EOVtaskDerived *t, eOmessage_t msg
     // ok, get back my type.
     EOMtask *mtsk = (EOMtask *)t;
 
-//    #warning: we could remove teh check vs argument not NULL, as long as it is called correctly     
+//    /////#warning: we could remove teh check vs argument not NULL, as long as it is called correctly     
 //    if(NULL == mtsk) 
 //    {
 //        return(eores_NOK_nullpointer);
@@ -696,7 +696,7 @@ static eOresult_t s_eom_task_isr_exec_callback(EOVtaskDerived *t, eOcallback_t c
 
     eOresult_t res = eores_NOK_generic;
 
-//    #warning: we could remove teh check vs argument not NULL, as long as it is called correctly     
+//    /////#warning: we could remove teh check vs argument not NULL, as long as it is called correctly     
 //    if(NULL == mtsk) 
 //    {
 //        return(eores_NOK_nullpointer);
@@ -724,7 +724,7 @@ static eOresult_t s_eom_task_tsk_exec_callback(EOVtaskDerived *t, eOcallback_t c
 
     eOresult_t res = eores_NOK_generic;
 
-//    #warning: we could remove teh check vs argument not NULL, as long as it is called correctly     
+//    /////#warning: we could remove teh check vs argument not NULL, as long as it is called correctly     
 //    if(NULL == mtsk) 
 //    {
 //        return(eores_NOK_nullpointer);
@@ -752,7 +752,7 @@ extern eOid08_t s_eom_task_get_id(EOVtaskDerived *t)
     EOMtask *mtsk = (EOMtask *)t;
     osal_task_id_t id = 0;
 
-//    #warning: we could remove the check vs argument not NULL, as long as it is called correctly     
+//    /////#warning: we could remove the check vs argument not NULL, as long as it is called correctly     
 //    if(NULL == mtsk) 
 //    {
 //        return(eores_NOK_nullpointer);

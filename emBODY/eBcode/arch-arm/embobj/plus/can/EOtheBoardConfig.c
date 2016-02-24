@@ -2270,7 +2270,7 @@ extern const eOmn_serv_configuration_t * eoboardconfig_code2skin_serv_configurat
 {
     const eOmn_serv_configuration_t * ret = NULL;
     
-//    #warning --> rimuovo la skin per debug sul viola che ha problemi sul can2 della eb2
+//    /////#warning --> rimuovo la skin per debug sul viola che ha problemi sul can2 della eb2
 //    return(NULL);
 #if     defined(ICUB_MEC_V3) 
     switch(code)
@@ -2311,7 +2311,7 @@ extern const eOmn_serv_configuration_t * eoboardconfig_code2inertials_serv_confi
 {
     const eOmn_serv_configuration_t * ret = NULL;
 
-//    #warning --> rimuovo inerziali per debug sul viola che ha problemi sul can2 della eb2
+//    /////#warning --> rimuovo inerziali per debug sul viola che ha problemi sul can2 della eb2
 //    return(NULL);
     
     switch(code)

@@ -423,7 +423,7 @@ extern eOresult_t eo_services_ProcessCommand(EOtheServices *p, eOmn_service_cmmn
     // the operation can be: eomn_serv_operation_verifyactivate, eomn_serv_operation_start, eomn_serv_operation_stop
     // the category can be mc, mais, strain, skin, inertials
     
-    #warning TODO: put in function eo_services_ProcessCommand() all what is needed to activate / start / stop the service and send reply back.
+    /////#warning TODO: put in function eo_services_ProcessCommand() all what is needed to activate / start / stop the service and send reply back.
         
     switch(operation)
     {
@@ -521,7 +521,7 @@ static void s_activate_services_now(void *p)
     // depending on the board number we have something to do which is different
     // at first we do motion control, then strain, then skin, then inertials.
 
-#warning -->  SO FAR, we dont verify/activate/start the MAIS as a standalone service.
+/////#warning -->  SO FAR, we dont verify/activate/start the MAIS as a standalone service.
     // we could do it by simply doing it as second thing after motioncontrol.
     
     const eOmn_serv_configuration_t * servcfg = NULL;

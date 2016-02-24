@@ -699,7 +699,7 @@ static eObool_t s_eo_candiscovery2_IsDetectionOK(EOtheCANdiscovery2 *p, eOcanmap
     }
     else
     {   // ok, i compare
-        #warning TODO: check all memcmp and memcopy etc where there is sizeof(eObrd_version_t)
+        /////#warning TODO: check all memcmp and memcopy etc where there is sizeof(eObrd_version_t)
         // check differences between target and detected
         if(0 != memcmp(&detected->firmware, &s_eo_thecandiscovery2.target.info.firmware, sizeof(s_eo_thecandiscovery2.target.info.firmware)))
         //if((detected->firmwareversion.major != s_eo_thecandiscovery2.target.info.firmware.major) || (detected->firmwareversion.minor != s_eo_thecandiscovery2.target.info.firmware.minor))

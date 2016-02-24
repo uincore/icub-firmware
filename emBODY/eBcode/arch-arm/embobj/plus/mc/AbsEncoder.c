@@ -101,16 +101,11 @@ void AbsEncoder_posvel(AbsEncoder* o, int32_t* position, int32_t* velocity)
     *velocity = o->sign*o->velocity;
 }
 
-static void AbsEncoder_position_init(AbsEncoder* o, int16_t position, uint8_t error_mask)
+
+
+static void AbsEncoder_position_init(AbsEncoder* o, int16_t position)
 {
     if (!o) return;
-    
-    if (error_mask)
-    {
-        o->valid_first_data_cnt = 0;
-        
-        return;
-    }
     
     if (!o->valid_first_data_cnt)
     {
@@ -141,115 +136,116 @@ static void AbsEncoder_position_init(AbsEncoder* o, int16_t position, uint8_t er
     }
 }
 
-int32_t AbsEncoder_update(AbsEncoder* o, int16_t position, uint8_t error_mask)
+void AbsEncoder_timeout(AbsEncoder* o)
 {
-    //static const int16_t MAX_ENC_CHANGE = 7*ENCODER_QUANTIZATION;
+    if (!o) return;
     
-    eOemsrunner_diagnosticsinfo_t* runner_info = eom_emsrunner_GetDiagnosticsInfoHandle(eom_emsrunner_GetHandle());
+    if (o->state.bits.not_configured) return;
+    
+    if (o->state.bits.not_calibrated) return;
+    
+    if (o->timeout_fault_cnt > ENCODER_TIMEOUT_COUNTER)
+    {
+        o->faults.fault_bits.timeout_fault = TRUE;
+    }
+    else
+    {
+        ++o->timeout_fault_cnt;
+    }
+    
+    o->valid_first_data_cnt = 0;
+}
+
+void AbsEncoder_invalid(AbsEncoder* o)
+{
+    if (!o) return;
+    
+    if (o->state.bits.not_configured) return;
+    
+    if (o->state.bits.not_calibrated) return;
+
+    if (o->invalid_fault_cnt > ENCODER_INVALID_COUNTER)
+    {
+        o->faults.fault_bits.invalid_data_fault = TRUE;
+    }
+    else
+    {
+        ++o->invalid_fault_cnt;
+    }
+    
+    o->valid_first_data_cnt = 0;
+}
+
+int32_t AbsEncoder_update(AbsEncoder* o, int16_t position)
+{
+    if (!o) return 0;
         
     if (o->state.bits.not_configured) return 0;
     
     if (o->state.bits.not_calibrated) return 0;
     
-    if (!error_mask)
-    {
-        position -= o->offset;
+    position -= o->offset;
         
-        o->invalid_fault_cnt = 0;
-        o->timeout_fault_cnt = 0;
-    }
-    else
-    {
-        if (error_mask & 0x01)
-        {
-            if (o->invalid_fault_cnt > 50)
-            {
-                o->faults.fault_bits.invalid_data_fault = TRUE;
-            }
-            else
-            {
-                ++o->invalid_fault_cnt;
-            }
-        }
-        else
-        {
-            o->invalid_fault_cnt = 0;
-        }    
-        
-        if (error_mask & 0x02)
-        {
-            if (o->timeout_fault_cnt > 50)
-            {
-                o->faults.fault_bits.timeout_fault = TRUE;
-            }
-            else
-            {
-                ++o->timeout_fault_cnt;
-            }
-        }
-        else
-        {
-            o->timeout_fault_cnt = 0;
-        }  
-    }
+    o->invalid_fault_cnt = 0;
+    o->timeout_fault_cnt = 0;
     
     if (o->state.bits.not_initialized)
     {
-        AbsEncoder_position_init(o, position, error_mask);
+        AbsEncoder_position_init(o, position);
         
         o->velocity = 0;
         
         return o->sign*o->distance;
     }
     
-    if (!error_mask)
-    {        
-        int16_t check = position - o->position_last;
+    int16_t check = position - o->position_last;
         
-        o->position_last = position;
+    o->position_last = position;
 
-        if (-o->spike_limit <= check && check <= o->spike_limit)
-        {
-            int16_t delta = position - o->position_sure;
+    if (-o->spike_limit <= check && check <= o->spike_limit)
+    {
+        int16_t delta = position - o->position_sure;
             
-            if (delta)
-            {
-                o->position_sure = position;
+        if (delta)
+        {
+            o->position_sure = position;
                 
-                o->delta = delta;
+            o->delta = delta;
                 
-                o->distance += delta;
+            o->distance += delta;
                 
-                o->velocity = (7*o->velocity + ((int32_t)CTRL_LOOP_FREQUENCY)*delta) >> 3;
-            }
-            else
-            {
-                o->velocity = (7*o->velocity) >> 3;
-            }
+            o->velocity = (7*o->velocity + ((int32_t)CTRL_LOOP_FREQUENCY)*delta) >> 3;
         }
         else
         {
-            o->spikes_count++;
-       
             o->velocity = (7*o->velocity) >> 3;
         }
+    }
+    else
+    {
+        o->spikes_count++;
+       
+        o->velocity = (7*o->velocity) >> 3;
+    }
         
-        //every second
-        if ((runner_info->numberofperiods % 1000) == 0)
-        {
-            if (o->spikes_count > 0)
-            {                
-                //message "spike encoder error"
-                eOerrmanDescriptor_t descriptor = {0};
-                descriptor.par16 = o->ID;           
-                descriptor.par64 = o->spikes_count;
-                descriptor.sourcedevice = eo_errman_sourcedevice_localboard;
-                descriptor.sourceaddress = 0;
-                descriptor.code = eoerror_code_get(eoerror_category_MotionControl, eoerror_value_MC_aea_abs_enc_spikes);
-                eo_errman_Error(eo_errman_GetHandle(), eo_errortype_warning, NULL, NULL, &descriptor);
+    //every second
+    
+    eOemsrunner_diagnosticsinfo_t* runner_info = eom_emsrunner_GetDiagnosticsInfoHandle(eom_emsrunner_GetHandle());
+    
+    if ((runner_info->numberofperiods % 1000) == 0)
+    {
+        if (o->spikes_count > 0)
+        {                
+            //message "spike encoder error"
+            eOerrmanDescriptor_t descriptor = {0};
+            descriptor.par16 = o->ID;           
+            descriptor.par64 = o->spikes_count;
+            descriptor.sourcedevice = eo_errman_sourcedevice_localboard;
+            descriptor.sourceaddress = 0;
+            descriptor.code = eoerror_code_get(eoerror_category_MotionControl, eoerror_value_MC_aea_abs_enc_spikes);
+            eo_errman_Error(eo_errman_GetHandle(), eo_errortype_warning, NULL, NULL, &descriptor);
                 
-                o->spikes_count = 0;
-            }
+            o->spikes_count = 0;
         }
     }
     

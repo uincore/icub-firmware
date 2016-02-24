@@ -547,3 +547,43 @@ static void JointSet_set_inner_control_flags(JointSet* o)
         o->trq_control_active = FALSE;
     }
 }
+
+
+#if 0
+typedef struct                  // size is 1+3+4*4 = 20
+{
+    eOenum08_t                  type;                               /**< use eOmc_calibration_type_t */
+    uint8_t                     filler03[3];
+    union
+    {
+        uint32_t                                                any[6];
+        eOmc_calibrator_params_type0_hard_stops_t               type0;
+        eOmc_calibrator_params_type1_abs_sens_analog_t          type1;
+        eOmc_calibrator_params_type2_hard_stops_diff_t          type2;
+        eOmc_calibrator_params_type3_abs_sens_digital_t         type3;
+        eOmc_calibrator_params_type4_abs_and_incremental_t      type4;
+        eOmc_calibrator_params_type5_hard_stops_mc4plus_t       type5;
+        eOmc_calibrator_params_type6_mais_t                     type6;
+        eOmc_calibrator_params_type7_hall_sensor_t              type7;
+        eOmc_calibration_type8_adc_and_incr_mc4plus_t           type8;
+    } params;                                                       /**< the params of the calibrator */   
+} eOmc_calibrator32_t;           EO_VERIFYsizeof(eOmc_calibrator32_t, 28);
+typedef eOmc_calibrator32_t eOmc_calibrator_t;
+#endif
+
+void JointSet_calibrate(JointSet* o, uint8_t e, eOmc_calibrator_t *calibrator)
+{
+    switch (calibrator->type)
+    {
+        case eomc_calibration_type3_abs_sens_digital:
+            AbsEncoder_calibrate(o->absEncoder[e], calibrator->params.type3.calibrationZero);
+            break;
+        
+        case eomc_calibration_type9_motor_self_calibrated:
+            Motor_config_pos_offset(o->motor+e, calibrator->params.type9.calibrationZero);
+            break;
+        
+        default:
+            break;
+    }
+}

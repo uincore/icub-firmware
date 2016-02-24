@@ -705,7 +705,7 @@ extern eOresult_t eo_skin_SetMode(EOtheSKIN *p, uint8_t patchindex, eOsk_sigmode
             errdes.par64            = 0;
             eo_errman_Error(eo_errman_GetHandle(), eo_errortype_warning, NULL, s_eobj_ownname, &errdes);   
             
-//            #warning TBD: VERY IMPORTANT -> see the following code, where we need also a special message to board with address 0xE
+//            /////#warning TBD: VERY IMPORTANT -> see the following code, where we need also a special message to board with address 0xE
 //
 //            for(i=skconfig_ptr->boardAddrStart; i<boardEndAddr; i++)
 //            {
@@ -1022,7 +1022,7 @@ static eOresult_t s_eo_skin_TXstop(EOtheSKIN *p)
             continue;
         }
          
-        //#warning marco.accame: see if we can remove it .....
+        ///////#warning marco.accame: see if we can remove it .....
         // if we are in here it means that robotinterface has activated the skin after that the verify() was done succesfully
         // thus, we can remove the continue. BUT who cares t send the silence command or not if the patch is already silent ....
         if(eosk_sigmode_dontsignal == skin->config.sigmode)

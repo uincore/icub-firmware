@@ -57,7 +57,7 @@ extern "C" {
 #define IQQ_CONTROLLED_MOTOR 3
 #define POS_CONTROLLED_MOTOR 4
 
-//#warning in v3 fare in modo che NON venga definito USE_2FOC_FAST_ENCODER 
+///////#warning in v3 fare in modo che NON venga definito USE_2FOC_FAST_ENCODER 
 
 #define AEA_DEFAULT_SPIKE_LIMIT 112 // 7*16 = 7*65536/resolution 
     
@@ -81,6 +81,9 @@ extern "C" {
 
 #define CAN_ALIVE_TIMEOUT  50
 #define CTRL_REQ_TIMEOUT   50
+
+#define ENCODER_TIMEOUT_COUNTER 50
+#define ENCODER_INVALID_COUNTER 50
 
 #define PWM_OUTPUT_LIMIT_2FOC 10000
 #define PWM_OUTPUT_LIMIT      0x7FFF //32767 

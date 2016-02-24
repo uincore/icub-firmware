@@ -39,7 +39,7 @@
 #include "EOMtheEMSappl.h"
 
 #include "EOmcController.h"
-#include "EOemsController.h"
+#include "Controller.h"
 
 #include "hal_sys.h"
 #include "hal_motor.h"
@@ -48,9 +48,9 @@
 
 #include "EOVtheCallbackManager.h"
 
-//#warning TODO: i have kept inclusion of EOemsControllerCfg.h, but it must be removed. read following comment
+///////#warning TODO: i have kept inclusion of EOemsControllerCfg.h, but it must be removed. read following comment
 // there must be another way to propagate externally to the motor-controller library some properties .... macros must be removed
-#warning TODO: -> remove inclusion of EOemsControllerCfg.h and find a better mode to propagate the macro USE_ONLY_QE
+/////#warning TODO: -> remove inclusion of EOemsControllerCfg.h and find a better mode to propagate the macro USE_ONLY_QE
 #include "EOemsControllerCfg.h"
 #include "EOCurrentsWatchdog.h"
 
@@ -209,7 +209,7 @@ extern EOtheMotionController* eo_motioncontrol_Initialise(void)
     p->service.servconfig.type = eomn_serv_NONE;
     
     // up to to 12 mc4 OR upto 4 foc (the MAIS is managed directly by the EOtheMAIS object)
-    //#warning CHECK: we could use only 3 mc4 boards instead of 12 in candiscovery. shall we do it?
+    ///////#warning CHECK: we could use only 3 mc4 boards instead of 12 in candiscovery. shall we do it?
     p->sharedcan.boardproperties = eo_vector_New(sizeof(eOcanmap_board_properties_t), eo_motcon_maxJOMOs, NULL, NULL, NULL, NULL);
     
     // up to 12 jomos
@@ -525,8 +525,8 @@ extern eOresult_t eo_motioncontrol_Deactivate(EOtheMotionController *p)
         }            
         
         eo_encoderreader_Deactivate(p->mcmc4plus.theencoderreader);
-        #warning TODO: in eo_motioncontrol_Deactivate() for mc4plus call: eo_emsController_Deinit()
-        #warning TODO: in eo_motioncontrol_Deactivate() for mc4plus call: disable the motors ...
+        /////#warning TODO: in eo_motioncontrol_Deactivate() for mc4plus call: eo_emsController_Deinit()
+        /////#warning TODO: in eo_motioncontrol_Deactivate() for mc4plus call: disable the motors ...
             
     }        
   
@@ -641,12 +641,14 @@ extern eOresult_t eo_motioncontrol_Activate(EOtheMotionController *p, const eOmn
 
             
             // init the emscontroller.
-            #warning TODO: change the emsController. see comments below
+            /////#warning TODO: change the emsController. see comments below
             //                the emscontroller is not a singleton which can be initted and deinitted. 
             // it should have a _Initialise(), a _GetHandle(), a _Config(cfg) and a _Deconfig().
             if(NULL == p->mcfoc.thecontroller)
             {
-                p->mcfoc.thecontroller = eo_emsController_Init((eOemscontroller_board_t)servcfg->data.mc.foc_based.boardtype4mccontroller, emscontroller_actuation_2FOC, numofjomos);   
+                //p->mcfoc.thecontroller = eo_emsController_Init((eOemscontroller_board_t)servcfg->data.mc.foc_based.boardtype4mccontroller, emscontroller_actuation_2FOC, numofjomos);
+                p->mcfoc.thecontroller = Controller_new(numofjomos);
+                Controller_config_board((eOemscontroller_board_t)servcfg->data.mc.foc_based.boardtype4mccontroller, HARDWARE_2FOC);                
             }
             
             
@@ -784,12 +786,14 @@ extern eOresult_t eo_motioncontrol_Activate(EOtheMotionController *p, const eOmn
            
             // marco.accame: i keep the same initialisation order as davide.pollarolo did in his EOmcService.c (a, b, c etc)
             // a. init the emscontroller.
-            #warning TODO: change the emsController. see comments below
+            /////#warning TODO: change the emsController. see comments below
             // the emscontroller is not a singleton which can be initted and deinitted. 
             // it should have a _Initialise(), a _GetHandle(), a _Config(cfg) and a _Deconfig().
             if(NULL == p->mcmc4plus.thecontroller)
             {
-                p->mcmc4plus.thecontroller = eo_emsController_Init((eOemscontroller_board_t)servcfg->data.mc.mc4plus_based.boardtype4mccontroller, emscontroller_actuation_LOCAL, numofjomos);   
+                //p->mcfoc.thecontroller = eo_emsController_Init((eOemscontroller_board_t)servcfg->data.mc.foc_based.boardtype4mccontroller, emscontroller_actuation_LOCAL, numofjomos);
+                p->mcmc4plus.thecontroller = Controller_new(numofjomos);   
+                Controller_config_board((eOemscontroller_board_t)servcfg->data.mc.mc4plus_based.boardtype4mccontroller, HARDWARE_MC4p);
             }       
 
             // b. clear the pwm values and the port mapping
@@ -811,7 +815,7 @@ extern eOresult_t eo_motioncontrol_Activate(EOtheMotionController *p, const eOmn
 
             
             // e. activate interrupt line for quad_enc indexes check
-            #warning: marco.accame: maybe it is better to move it inside eo_appEncReader_Activate()
+            /////#warning: marco.accame: maybe it is better to move it inside eo_appEncReader_Activate()
             s_eo_motioncontrol_mc4plusbased_hal_init_quad_enc_indexes_interrupt();
             
             eo_currents_watchdog_Initialise();
@@ -890,57 +894,59 @@ extern eOresult_t eo_motioncontrol_Tick(EOtheMotionController *p)
         return(eores_OK);
     }
     
-    
     if(eo_motcon_mode_foc == p->service.servconfig.type)
     {
-        uint8_t error_mask = 0;
-        eOresult_t res = eores_NOK_generic;
-        uint32_t encvalue[4] = {0}; 
-        hal_spiencoder_errors_flags encflags[4] = {0};
+        //uint8_t error_mask = 0;
+        //eOresult_t res = eores_NOK_generic;
+        //uint32_t encvalue[4] = {0}; 
+        //hal_spiencoder_errors_flags encflags[4] = {0};
         int16_t pwm[4] = {0};
         
-        uint8_t i = 0;
-
-#ifndef USE_ONLY_QE   
+        eObool_t timeout = eobool_true;
         
         // wait for the encoders for some time 
-        for(i=0; i<30; ++i)
+        for (uint8_t i=0; i<30; ++i)
         {
-            if(eobool_true == eo_encoderreader_IsReadingAvailable(p->mcfoc.theencoderreader))
+            if (eo_encoderreader_IsReadingAvailable(p->mcfoc.theencoderreader))
             {
+                timeout = eobool_false;
+                
                 break;
             }
-            else
-            {
-                hal_sys_delay(5*hal_RELTIME_1microsec);
-            }
+            
+            hal_sys_delay(5*hal_RELTIME_1microsec);
         }        
         
-        // read the encoders        
-        if(eobool_true == eo_encoderreader_IsReadingAvailable(p->mcfoc.theencoderreader))
-        {    
-            for(i=0; i<p->numofjomos; i++)
-            {
-                uint32_t extra = 0;
-                res = eo_encoderreader_Read(p->mcfoc.theencoderreader, i, &(encvalue[i]), &extra, &(encflags[i]));
-                if (res != eores_OK)
-                {
-                    error_mask |= 1<<(i<<1);
-                    //encvalue[enc] = (uint32_t)ENC_INVALID;
-                }
-            }        
-        }
-        else
+        if (timeout)
         {
-            error_mask = 0xAA; // timeout
+            for (uint8_t e=0; e<p->numofjomos; ++e)
+            {
+                Controller_timeout_absEncoder_fbk(e);
+            }
         }
-
+        else // encoder readings available
+        {
+            uint32_t extra = 0;
+            uint32_t enc_value;
+            hal_spiencoder_errors_flags enc_flags;
+            
+            for (uint8_t e=0; e<p->numofjomos; ++e)
+            {
+                eOresult_t res = eo_encoderreader_Read(p->mcfoc.theencoderreader, e, &enc_value, &extra, &enc_flags);
+                
+                if (res == eores_OK)
+                {
+                    Controller_update_absEncoder_fbk(e, enc_value);
+                }
+                else
+                {
+                    Controller_invalid_absEncoder_fbk(e);
+                }
+            }     
+        }
+       
         // Restart the reading of the encoders
         eo_encoderreader_StartReading(p->mcfoc.theencoderreader);
-        
-#endif // USE_ONLY_QE        
-            
-        eo_emsController_AcquireAbsEncoders((int32_t*)encvalue, error_mask);
         
         eo_emsController_CheckFaults();
             
@@ -954,6 +960,10 @@ extern eOresult_t eo_motioncontrol_Tick(EOtheMotionController *p)
         s_eo_motioncontrol_UpdateJointStatus(p);
   
     }
+    else if((eo_motcon_mode_mc4plus == p->service.servconfig.type) || (eo_motcon_mode_mc4plusmais == p->service.servconfig.type))
+    {
+        s_eo_mcserv_do_mc4plus(p);        
+    }
     else if(eo_motcon_mode_mc4 == p->service.servconfig.type)
     {
         // motion done
@@ -962,10 +972,6 @@ extern eOresult_t eo_motioncontrol_Tick(EOtheMotionController *p)
         // virtual strain
         eo_virtualstrain_Tick(eo_virtualstrain_GetHandle());        
         
-    }
-    else if((eo_motcon_mode_mc4plus == p->service.servconfig.type) || (eo_motcon_mode_mc4plusmais == p->service.servconfig.type))
-    {
-        s_eo_mcserv_do_mc4plus(p);        
     }
 
     return(eores_OK);    
@@ -1014,7 +1020,7 @@ extern eOresult_t eo_motioncontrol_Stop(EOtheMotionController *p)
 
 
 
-#warning TODO: move MotorEnable inside the controller ... it must check vs coupled joints ...
+/////#warning TODO: move MotorEnable inside the controller ... it must check vs coupled joints ...
 extern eOresult_t eo_motioncontrol_extra_MotorEnable(EOtheMotionController *p, uint8_t jomo)
 {   // former eo_mcserv_EnableMotor()
     if(NULL == p)
@@ -1433,14 +1439,14 @@ extern eObool_t eo_motioncontrol_extra_IsMotorEncoderIndexReached(EOtheMotionCon
     
     eObool_t indx_reached = eobool_false;
     
-    //#warning marco.accame: why do we use a pwm port for an inc encoder? we should use the inc port instead.   
+    ///////#warning marco.accame: why do we use a pwm port for an inc encoder? we should use the inc port instead.   
     indx_reached = (eObool_t) hal_quadencoder_is_index_found((hal_quadencoder_t)p->mcmc4plus.pwmport[jomo]);
     
     return(indx_reached);
 }
 
 
-#warning marco.accame: TODO: make eo_motioncontrol_extra_ManageEXTfault() a static function and put it inside eo_motioncontrol_Tick() and only for mc4plus-based control ...
+/////#warning marco.accame: TODO: make eo_motioncontrol_extra_ManageEXTfault() a static function and put it inside eo_motioncontrol_Tick() and only for mc4plus-based control ...
 extern eOresult_t eo_motioncontrol_extra_ManageEXTfault(EOtheMotionController *p)
 {   // formerly this code was in s_overriden_runner_CheckAndUpdateExtFaults().
     if(NULL == p)
@@ -2543,7 +2549,7 @@ static eOresult_t s_eo_mcserv_do_mc4plus(EOtheMotionController *p)
     // compute the pwm using pid
     eo_emsController_PWM(pwm);
     
-    #warning: for MAIS-controlled joints... do a check on the limits (see MC4 firmware) before physically applying PWM
+    /////#warning: for MAIS-controlled joints... do a check on the limits (see MC4 firmware) before physically applying PWM
     
     // 6. apply the pwm. for the case of mc4plus we call hal_pwm();
     for(i=0; i<p->numofjomos; i++)

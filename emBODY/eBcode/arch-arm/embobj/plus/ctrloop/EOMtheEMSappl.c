@@ -755,7 +755,7 @@ static void s_eom_emsappl_OnError(eOerrmanErrorType_t errtype, const char *info,
     
 
     
-    //#warning --> marco.accame: in case of fatal error, shall we: (1) go smoothly to error state, (2) force immediate transition to error state?
+    ///////#warning --> marco.accame: in case of fatal error, shall we: (1) go smoothly to error state, (2) force immediate transition to error state?
     
     // if in here tehre is a serious error. but we dont care about concurrency
     //osal_mutex_take(s_emsappl_singleton.onerrormutex, osal_reltimeINFINITE);    
@@ -893,7 +893,7 @@ extern void eo_cfg_sm_EMSappl_hid_on_entry_RUN(EOsm *s)
 
 extern void eo_cfg_sm_EMSappl_hid_on_exit_RUN(EOsm *s)
 {
-    //#warning --> it is good thing to attempt to stop the hal timers in here as well. see comment below.
+    ///////#warning --> it is good thing to attempt to stop the hal timers in here as well. see comment below.
     // marco.accame: if we exit from the runner in an un-expected way with a fatal error, then we dont 
     // stop teh timers smoothly. thus we do it in here as well.
     

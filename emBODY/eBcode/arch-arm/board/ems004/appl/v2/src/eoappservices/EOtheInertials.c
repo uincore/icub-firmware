@@ -754,7 +754,7 @@ extern eOresult_t eo_inertials_Tick(EOtheInertials *p, eObool_t resetstatus)
 
 
 
-//#warning THINK of what to use instead of eo_inertials_ServiceConfig()
+///////#warning THINK of what to use instead of eo_inertials_ServiceConfig()
 extern eOresult_t eo_inertials_ServiceConfig(EOtheInertials *p, const eOas_inertial_serviceconfig_t* cfg)
 {    
     // we can configure the service how many times we want. however the object must be initted and must there be an inertial entity
@@ -930,7 +930,7 @@ extern eOresult_t eo_inertials_AcceptCANframe(EOtheInertials *p, eOas_inertial_t
     if(eobool_true == eo_vector_Full(p->fifoofinertialdata))
     {
         // damn... a loss of can frames
-        #warning TODO: add a proper message for loss of inertial can frames and remove eoerror_value_SK_arrayofcandataoverflow
+        /////#warning TODO: add a proper message for loss of inertial can frames and remove eoerror_value_SK_arrayofcandataoverflow
         eOerrmanDescriptor_t des = {0};
         des.code            = eoerror_code_get(eoerror_category_Skin, eoerror_value_SK_arrayofcandataoverflow);
         des.par16           = (frame->id & 0x0fff) | ((frame->size & 0x000f) << 12);
