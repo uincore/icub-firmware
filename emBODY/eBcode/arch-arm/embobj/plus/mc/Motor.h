@@ -90,7 +90,7 @@ typedef struct //CanState2FocMsg
         
     } fault_state;
     
-} CanState2FocMsg;
+} State2FocMsg;
 
 typedef struct //Motor
 {
@@ -153,8 +153,8 @@ typedef struct //Motor
     
     uint32_t fault_state_mask;
     uint8_t  qe_state_mask;
-    uint8_t  control_mode;
-    uint8_t  control_mode_req;
+    icubCanProto_controlmode_t  control_mode;
+    icubCanProto_controlmode_t  control_mode_req;
     WatchDog control_mode_req_wdog;
 
     // 2FOC specific data
@@ -186,7 +186,7 @@ extern BOOL Motor_check_faults(Motor* o); //
 extern void Motor_clear_faults(Motor* o); //
 
 extern CTRL_UNITS Motor_do_trq_control(Motor* o, CTRL_UNITS trq_ref, CTRL_UNITS trq_fbk); //
-extern void Motor_update_state_fbk_can(Motor* o, CanState2FocMsg* can_state_msg); //
+extern void Motor_update_state_fbk(Motor* o, void* state_msg); //
 extern void Motor_update_odometry_fbk_can(Motor* o, CanOdometry2FocMsg* data); //
 
 extern void Motor_actuate(Motor* o, uint8_t N); //

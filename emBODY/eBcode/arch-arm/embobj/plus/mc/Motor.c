@@ -3,11 +3,6 @@
 
 #include "EoCommon.h"
 
-//#include "EOtheMemoryPool.h"
-//#include "EoError.h"
-//#include "EOtheErrorManager.h"
-//#include "EOVtheSystem.h"
-
 #include "iCubCanProto_types.h"
 
 #include "EoProtocol.h"
@@ -16,19 +11,24 @@
 
 #include "EOtheCANservice.h"
 
+#include "hal_motor.h"
+
 #include "Motor.h"
 
 /////////////////////////////////////////////////////////
 // Motor
 
-static void Motor_new_state_req(Motor *o, uint8_t control_mode)
+static void Motor_new_state_req(Motor *o, icubCanProto_controlmode_t control_mode)
 {
     o->control_mode_req = control_mode;
     
     WatchDog_rearm(&o->control_mode_req_wdog);
 }
 
-static void Motor_config_MC4p(uint8_t motor, eOmc_motor_config_t* config){}
+static void Motor_config_MC4p(uint8_t motor, eOmc_motor_config_t* config)
+{
+}
+
 static void Motor_config_2FOC(uint8_t motor, eOmc_motor_config_t* config)
 {   
     int8_t KpKiKdKs[7];
@@ -85,8 +85,7 @@ static void Motor_config_2FOC(uint8_t motor, eOmc_motor_config_t* config)
     eo_canserv_SendCommandToEntity(eo_canserv_GetHandle(), &cmdMotorConfig, id32);      
 }
 
-static void Motor_set_control_mode_MC4p(uint8_t motor, uint8_t control_mode){}
-static void Motor_set_control_mode_2FOC(uint8_t motor, uint8_t control_mode)
+static void Motor_set_control_mode_2FOC(uint8_t motor, icubCanProto_controlmode_t control_mode)
 {
     eOprotID32_t id32 = eoprot_ID_get(eoprot_endpoint_motioncontrol, eoprot_entity_mc_motor, motor, 0);
     eOcanprot_command_t command = {0};
@@ -150,7 +149,7 @@ void Motor_config(Motor* o, uint8_t ID, uint8_t HARDWARE_TYPE, uint8_t MOTOR_CON
     }
     else if (o->HARDWARE_TYPE == HARDWARE_MC4p)
     {
-        Motor_config_MC4p(o->ID, config);
+        //Motor_config_MC4p(o->ID, config);
     }
     
     WatchDog_set_base_time_msec(&o->control_mode_req_wdog, CTRL_REQ_TIMEOUT);
@@ -184,7 +183,7 @@ void Motor_config_pos_offset(Motor* o, int32_t offset) //
 
 void Motor_set_run(Motor* o) //
 {
-    uint8_t control_mode;
+    icubCanProto_controlmode_t control_mode;
     
     switch (o->MOTOR_CONTROL_TYPE)
     {
@@ -210,7 +209,9 @@ void Motor_set_run(Motor* o) //
     }
     else if (o->HARDWARE_TYPE == HARDWARE_MC4p)
     {
-        Motor_set_control_mode_MC4p(o->ID, control_mode);
+        hal_motor_enable((hal_motor_t)o->ID);
+        
+        o->control_mode = control_mode;
     }
     
     Motor_new_state_req(o, control_mode);
@@ -224,7 +225,9 @@ void Motor_set_idle(Motor* o) //
     }
     else if (o->HARDWARE_TYPE == HARDWARE_MC4p)
     {
-        Motor_set_control_mode_MC4p(o->ID, icubCanProto_controlmode_idle);
+        hal_motor_disable((hal_motor_t)o->ID);
+        
+        o->control_mode = icubCanProto_controlmode_idle;
     }
     
     Motor_new_state_req(o, icubCanProto_controlmode_idle);    
@@ -238,7 +241,9 @@ void Motor_force_idle(Motor* o) //
     }
     else if (o->HARDWARE_TYPE == HARDWARE_MC4p)
     {
-        Motor_set_control_mode_MC4p(o->ID, icubCanProto_controlmode_forceIdle);
+        hal_motor_disable((hal_motor_t)o->ID);
+        
+        o->control_mode = icubCanProto_controlmode_idle;
     }
     
     Motor_new_state_req(o, icubCanProto_controlmode_idle);    
@@ -297,15 +302,17 @@ CTRL_UNITS Motor_do_trq_control(Motor* o, CTRL_UNITS trq_ref, CTRL_UNITS trq_fbk
     return PID_do_out(&o->trqPID, o->trq_err) + PID_do_friction_comp(&o->trqPID, o->vel_fbk, o->trq_ref);
 }
 
-void Motor_update_state_fbk_can(Motor* o, CanState2FocMsg* can_msg) //
+void Motor_update_state_fbk(Motor* o, void* state) //
 {
+    State2FocMsg* state_msg = (State2FocMsg*)state;
+    
     WatchDog_rearm(&o->can_2FOC_alive_wdog);
    
-    o->fault_state_mask = can_msg->fault_state.bitmask;
-    o->control_mode     = can_msg->control_mode; 
-    o->pwm_fbk          = can_msg->pwm_fbk;
-    o->qe_state_mask    = can_msg->qe_state.bitmask;
-    o->not_calibrated   = can_msg->qe_state.bits.not_calibrated;
+    o->fault_state_mask = state_msg->fault_state.bitmask;
+    o->control_mode     = state_msg->control_mode; 
+    o->pwm_fbk          = state_msg->pwm_fbk;
+    o->qe_state_mask    = state_msg->qe_state.bitmask;
+    o->not_calibrated   = state_msg->qe_state.bits.not_calibrated;
 }
 
 void Motor_update_odometry_fbk_can(Motor* o, CanOdometry2FocMsg* can_msg) //
@@ -323,25 +330,35 @@ void Motor_update_odometry_fbk_can(Motor* o, CanOdometry2FocMsg* can_msg) //
 
 void Motor_actuate(Motor* motor, uint8_t N) //
 {
-    int16_t output[MAX_PER_BOARD];
-    
-    for (int m=0; m<N; ++m)
+    if (motor->HARDWARE_TYPE == HARDWARE_2FOC)
     {
-        output[m] = motor[m].output;
-    }
+        int16_t output[MAX_PER_BOARD];
     
-    eOcanprot_command_t command = {0};
-    command.class = eocanprot_msgclass_periodicMotorControl;    
-    command.type  = ICUBCANPROTO_PER_MC_MSG__EMSTO2FOC_DESIRED_CURRENT;
-    command.value = output;
+        for (int m=0; m<N; ++m)
+        {
+            output[m] = motor[m].output;
+        }
     
-    eOcanmap_location_t location = {0};
-    location.port = eOcanport1;
-    location.addr = 0; // marco.accame: we put 0 just because it is periodic and this is the source address (the EMS has can address 0).
-    location.insideindex = eocanmap_insideindex_first; // because all 2foc have motor on index-0. 
+        eOcanprot_command_t command = {0};
+        command.class = eocanprot_msgclass_periodicMotorControl;    
+        command.type  = ICUBCANPROTO_PER_MC_MSG__EMSTO2FOC_DESIRED_CURRENT;
+        command.value = output;
+    
+        eOcanmap_location_t location = {0};
+        location.port = eOcanport1;
+        location.addr = 0; // marco.accame: we put 0 just because it is periodic and this is the source address (the EMS has can address 0).
+        location.insideindex = eocanmap_insideindex_first; // because all 2foc have motor on index-0. 
 
-    // and i send the command
-    eo_canserv_SendCommandToLocation(eo_canserv_GetHandle(), &command, location); 
+        // and i send the command
+        eo_canserv_SendCommandToLocation(eo_canserv_GetHandle(), &command, location); 
+    }
+    else if (motor->HARDWARE_TYPE == HARDWARE_MC4p)
+    {
+        for (int m=0; m<N; ++m)
+        {
+            hal_motor_pwmset(motor[m].ID, motor[m].output);
+        }
+    }
 }  
 
 // Motor

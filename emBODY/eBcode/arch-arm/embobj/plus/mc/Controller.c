@@ -79,7 +79,7 @@ MController* Controller_new(uint8_t nJoints) //
         );
     }
     
-    Controller_init(o);
+    Controller_init();
         
     return o;
 }
@@ -309,9 +309,14 @@ void Controller_update_absEncoder_fbk(uint8_t e, int32_t position) //
     AbsEncoder_update(smc->absEncoder[e], position);
 }
 
-void Controller_invalid_absEncoder_fbk(uint8_t e) //
+void Controller_update_motor_state_fbk(uint8_t m, void* state)
 {
-    AbsEncoder_invalid(smc->absEncoder[e]);
+    Motor_update_state_fbk(smc->motor+m, state);
+}
+
+void Controller_invalid_absEncoder_fbk(uint8_t e, uint8_t error_flags) //
+{
+    AbsEncoder_invalid(smc->absEncoder[e], error_flags);
 }
 
 void Controller_timeout_absEncoder_fbk(uint8_t e) //
@@ -332,12 +337,12 @@ void Controller_do()
     }
 }
 
-BOOL Controller_set_control_mode(uint8_t j, uint8_t control_mode) //
+BOOL Controller_set_control_mode(uint8_t j, eOmc_controlmode_command_t control_mode) //
 {
     return JointSet_set_control_mode(smc->jointSet+smc->j2s[j], control_mode);
 }    
 
-void Controller_set_interaction_mode(uint8_t j, uint8_t interaction_mode) //
+void Controller_set_interaction_mode(uint8_t j, eOmc_interactionmode_t interaction_mode) //
 {
     JointSet_set_interaction_mode(smc->jointSet+smc->j2s[j], interaction_mode);
 } 
@@ -525,9 +530,13 @@ typedef eOmc_calibrator32_t eOmc_calibrator_t;
 
 void Controller_calibrate(uint8_t e, eOmc_calibrator_t *calibrator)
 {
-    MController *o = smc;
-    
-    uint8_t s = o->e2s[e];
-    
-    JointSet_calibrate(o->jointSet+s, e, calibrator);
+    JointSet_calibrate(smc->jointSet+smc->e2s[e], e, calibrator);
+}
+
+void Controller_go_idle(void)
+{
+    for (uint8_t s=0; s<smc->nSets; ++s)
+    {
+        JointSet_set_control_mode(smc->jointSet+s, eomc_controlmode_cmd_force_idle);
+    }
 }

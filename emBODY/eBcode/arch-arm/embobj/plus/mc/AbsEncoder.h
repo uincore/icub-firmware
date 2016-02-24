@@ -68,7 +68,7 @@ extern void AbsEncoder_config(AbsEncoder *o, uint8_t ID, int32_t resolution, int
 extern void AbsEncoder_calibrate(AbsEncoder* o, int32_t offset);
 
 extern int32_t AbsEncoder_update(AbsEncoder* o, int16_t position);
-extern void AbsEncoder_invalid(AbsEncoder* o);
+extern void AbsEncoder_invalid(AbsEncoder* o, uint8_t error_flags);
 extern void AbsEncoder_timeout(AbsEncoder* o);
 
 extern int32_t AbsEncoder_position(AbsEncoder* o);

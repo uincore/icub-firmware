@@ -156,7 +156,7 @@ void AbsEncoder_timeout(AbsEncoder* o)
     o->valid_first_data_cnt = 0;
 }
 
-void AbsEncoder_invalid(AbsEncoder* o)
+void AbsEncoder_invalid(AbsEncoder* o, uint8_t error_flags)
 {
     if (!o) return;
     

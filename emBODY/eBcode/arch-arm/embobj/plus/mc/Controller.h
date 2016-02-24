@@ -53,17 +53,19 @@ extern void Controller_config_absEncoder(uint8_t j, int32_t resolution, int16_t 
 extern void Controller_config_Jjm(float **Jjm); //
 extern void Controller_config_Jje(float **Jje); //
 
+extern void Controller_update_motor_state_fbk(uint8_t m, void* state);
+
 extern void Controller_update_joint_torque_fbk(uint8_t j, CTRL_UNITS trq_fbk); //
 extern void Controller_update_absEncoder_fbk(uint8_t e, int32_t position); //
-extern void Controller_invalid_absEncoder_fbk(uint8_t e);
+extern void Controller_invalid_absEncoder_fbk(uint8_t e, uint8_t error_flags);
 extern void Controller_timeout_absEncoder_fbk(uint8_t e);
 
 extern int32_t Controller_get_absEncoder(uint8_t j); //
 
 extern void Controller_do(void); //
 
-extern BOOL Controller_set_control_mode(uint8_t j, uint8_t control_mode);
-extern void Controller_set_interaction_mode(uint8_t j, uint8_t interaction_mode);
+extern BOOL Controller_set_control_mode(uint8_t j, eOmc_controlmode_command_t control_mode);
+extern void Controller_set_interaction_mode(uint8_t j, eOmc_interactionmode_t interaction_mode);
 
 #if 0
 /** @typedef    typedef struct eOmc_calibrator32_t
@@ -92,5 +94,7 @@ typedef eOmc_calibrator32_t eOmc_calibrator_t;
 #endif
 
 extern void Controller_calibrate_encoder(uint8_t e, eOmc_calibrator_t *calibrator);
+
+extern void Controller_go_idle(void);
 
 #endif

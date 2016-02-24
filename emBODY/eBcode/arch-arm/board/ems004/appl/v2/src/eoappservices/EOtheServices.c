@@ -412,8 +412,8 @@ extern eOresult_t eo_services_ProcessCommand(EOtheServices *p, eOmn_service_cmmn
     }
     
     
-    eOmn_service_operation_t operation = command->operation;
-    eOmn_serv_category_t category = command->category;
+    eOmn_service_operation_t operation = (eOmn_service_operation_t)command->operation;
+    eOmn_serv_category_t category = (eOmn_serv_category_t)command->category;
     eOmn_serv_configuration_t *config = &command->configuration;
     
     
@@ -671,7 +671,7 @@ static eOresult_t s_eo_services_verifyactivate(EOtheServices *p, eOmn_serv_categ
         return(eores_OK);
     }
     
-    eOmn_serv_state_t state = p->mnservice->status.stateofservice[category];
+    eOmn_serv_state_t state = (eOmn_serv_state_t)p->mnservice->status.stateofservice[category];
     
     // now have a look at state. it must be eomn_serv_state_activated.
     

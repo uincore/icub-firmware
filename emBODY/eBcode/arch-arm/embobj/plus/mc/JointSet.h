@@ -27,7 +27,7 @@ typedef struct // JointSet
     
     AbsEncoder** absEncoder;
  
-    uint8_t control_mode;
+    eOmc_controlmode_t control_mode;
     uint8_t interaction_mode;
     
     BOOL pos_control_active;
@@ -64,7 +64,7 @@ extern void JointSet_do_control(JointSet* o); //
 
 extern void JointSet_do(JointSet* o);
     
-extern BOOL JointSet_set_control_mode(JointSet* o, uint8_t control_mode);
-extern void JointSet_set_interaction_mode(JointSet* o, uint8_t interaction_mode);
+extern BOOL JointSet_set_control_mode(JointSet* o, eOmc_controlmode_command_t control_mode);
+extern void JointSet_set_interaction_mode(JointSet* o, eOmc_interactionmode_t interaction_mode);
 
 #endif

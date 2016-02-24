@@ -900,7 +900,7 @@ extern eOresult_t eo_motioncontrol_Tick(EOtheMotionController *p)
         //eOresult_t res = eores_NOK_generic;
         //uint32_t encvalue[4] = {0}; 
         //hal_spiencoder_errors_flags encflags[4] = {0};
-        int16_t pwm[4] = {0};
+        //int16_t pwm[4] = {0};
         
         eObool_t timeout = eobool_true;
         
@@ -940,7 +940,8 @@ extern eOresult_t eo_motioncontrol_Tick(EOtheMotionController *p)
                 }
                 else
                 {
-                    Controller_invalid_absEncoder_fbk(e);
+                    uint8_t error_flags = 0; //= translate(enc_flags); // TODOALE
+                    Controller_invalid_absEncoder_fbk(e, error_flags);
                 }
             }     
         }
@@ -948,13 +949,15 @@ extern eOresult_t eo_motioncontrol_Tick(EOtheMotionController *p)
         // Restart the reading of the encoders
         eo_encoderreader_StartReading(p->mcfoc.theencoderreader);
         
-        eo_emsController_CheckFaults();
+        Controller_do();
+        
+        //eo_emsController_CheckFaults();
             
         /* 2) pid calc */
-        eo_emsController_PWM(pwm);
+        //eo_emsController_PWM(pwm);
 
         /* 3) prepare and punt in rx queue new setpoint */
-        s_eo_motioncontrol_SetCurrentSetpoint(p, pwm, 4); 
+        //s_eo_motioncontrol_SetCurrentSetpoint(p, pwm, 4); 
      
         /* 4) update joint status */
         s_eo_motioncontrol_UpdateJointStatus(p);
@@ -999,7 +1002,8 @@ extern eOresult_t eo_motioncontrol_Stop(EOtheMotionController *p)
     if(eo_motcon_mode_foc == p->service.servconfig.type)
     {   
         // just put controller in idle mode        
-        eo_emsMotorController_GoIdle();
+        //eo_emsMotorController_GoIdle();
+        Controller_go_idle();
     }      
     else if(eo_motcon_mode_mc4 == p->service.servconfig.type)
     {
@@ -1181,35 +1185,35 @@ extern eOresult_t eo_motioncontrol_extra_SetMotorFaultMask(EOtheMotionController
         if(jomo <3) 
         {
             // don't need to use p->mcmc4plus.pwmport[jomo], because the emsController (and related objs) use the same indexing of the highlevel
-            eo_motor_set_motor_status(eo_motors_GetHandle(), 0, fault_mask);
-            eo_motor_set_motor_status(eo_motors_GetHandle(), 1, fault_mask);
-            eo_motor_set_motor_status(eo_motors_GetHandle(), 2, fault_mask);
+            Controller_update_motor_state_fbk(0, fault_mask);
+            Controller_update_motor_state_fbk(1, fault_mask);
+            Controller_update_motor_state_fbk(2, fault_mask);
         }
         else
         {
-            eo_motor_set_motor_status(eo_motors_GetHandle(), jomo, fault_mask);
+            Controller_update_motor_state_fbk(jomo, fault_mask);
         }
     }
     else if(emscontroller_board_HEAD_neckpitch_neckroll == board_control)  
     {
-        eo_motor_set_motor_status(eo_motors_GetHandle(),0, fault_mask);
-        eo_motor_set_motor_status(eo_motors_GetHandle(),1, fault_mask);
+        Controller_update_motor_state_fbk(0, fault_mask);
+        Controller_update_motor_state_fbk(1, fault_mask);
     }
     else if(emscontroller_board_HEAD_neckyaw_eyes == board_control) 
     {
         if((jomo == 2) || (jomo == 3) ) 
         {
-            eo_motor_set_motor_status(eo_motors_GetHandle(), 2, fault_mask);
-            eo_motor_set_motor_status(eo_motors_GetHandle(), 3, fault_mask);
+            Controller_update_motor_state_fbk(2, fault_mask);
+            Controller_update_motor_state_fbk(3, fault_mask);
         }
         else
         {
-            eo_motor_set_motor_status(eo_motors_GetHandle(), jomo, fault_mask);
+            Controller_update_motor_state_fbk(jomo, fault_mask);
         }      
     }
     else  // the joint is not coupled to any other joint 
     { 
-        eo_motor_set_motor_status(eo_motors_GetHandle(), jomo, fault_mask);
+        Controller_update_motor_state_fbk(jomo, fault_mask);
     }      
     
     return eores_OK;

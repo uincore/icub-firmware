@@ -68,8 +68,8 @@ void Joint_init(Joint* o)
     
     PID_init(&o->posPID);
     
-    o->control_mode = icubCanProto_controlmode_notConfigured;
-    o->interaction_mode = icubCanProto_interactionmode_stiff;
+    o->control_mode = eomc_controlmode_notConfigured;
+    o->interaction_mode = eOmc_interactionmode_stiff;
     
     o->pos_control_active = FALSE;
     o->trq_control_active = FALSE;
@@ -143,17 +143,17 @@ void Joint_motion_reset(Joint *o)
     o->output = ZERO;
 }
 
-BOOL Joint_set_control_mode(Joint* o, uint8_t control_mode)
+BOOL Joint_set_control_mode(Joint* o, eOmc_controlmode_command_t control_mode)
 {
     if (o->control_mode == control_mode) return TRUE;
     
-    if (o->control_mode == icubCanProto_controlmode_notConfigured) return FALSE;
+    if (o->control_mode == eomc_controlmode_notConfigured) return FALSE;
         
-    if (o->control_mode == icubCanProto_controlmode_calibration) return FALSE;    
+    if (o->control_mode == eomc_controlmode_calib) return FALSE;    
     
-    if (o->control_mode == icubCanProto_controlmode_hwFault)
+    if (o->control_mode == eomc_controlmode_hwFault)
     {
-        if (control_mode == icubCanProto_controlmode_forceIdle)
+        if (control_mode == eomc_controlmode_cmd_force_idle)
         {
             Joint_clear_faults(o);
         }
@@ -165,20 +165,20 @@ BOOL Joint_set_control_mode(Joint* o, uint8_t control_mode)
     
     switch (control_mode)
     {
-        case icubCanProto_controlmode_forceIdle:
-            control_mode = icubCanProto_controlmode_idle;
-        case icubCanProto_controlmode_idle:
-        case icubCanProto_controlmode_mixed:
-        case icubCanProto_controlmode_velocity:
-        case icubCanProto_controlmode_position:
-        case icubCanProto_controlmode_direct:
+        case eomc_controlmode_cmd_force_idle:
+            control_mode = eomc_controlmode_cmd_idle;
+        case eomc_controlmode_cmd_idle:
+        case eomc_controlmode_cmd_mixed:
+        case eomc_controlmode_cmd_velocity:
+        case eomc_controlmode_cmd_position:
+        case eomc_controlmode_cmd_direct:
             break;
                 
-        case icubCanProto_controlmode_openloop:
+        case eomc_controlmode_cmd_openloop:
             if (o->motor_control_type != PWM_CONTROLLED_MOTOR) return FALSE;
             break;
 
-        case icubCanProto_controlmode_torque:
+        case eomc_controlmode_cmd_torque:
             if (!o->can_do_trq_ctrl) return FALSE;
             break;
             
@@ -186,7 +186,7 @@ BOOL Joint_set_control_mode(Joint* o, uint8_t control_mode)
             return FALSE;
     }
     
-    o->control_mode = control_mode;
+    o->control_mode = (eOmc_controlmode_t)control_mode;
     
     Joint_motion_reset(o);
     
@@ -201,13 +201,13 @@ typedef struct // Joint
 } Joint;
 #endif
 
-BOOL Joint_set_interaction_mode(Joint* o, uint8_t interaction_mode)
+BOOL Joint_set_interaction_mode(Joint* o, eOmc_interactionmode_t interaction_mode)
 {
     if (o->interaction_mode == interaction_mode) return TRUE;
     
     if (!o->can_do_trq_ctrl)
     {
-        if (interaction_mode == icubCanProto_interactionmode_compliant)
+        if (interaction_mode == eOmc_interactionmode_compliant)
         {
             return FALSE;
         }
@@ -215,7 +215,7 @@ BOOL Joint_set_interaction_mode(Joint* o, uint8_t interaction_mode)
     
     o->interaction_mode = interaction_mode;
     
-    if (interaction_mode == icubCanProto_interactionmode_stiff)
+    if (interaction_mode == eOmc_interactionmode_stiff)
     {
         Joint_motion_reset(o);
     }
@@ -329,7 +329,7 @@ CTRL_UNITS Joint_do_pwm_control(Joint* o)
             o->pos_err = o->pos_ref - o->pos_fbk;
             o->vel_err = o->vel_ref - o->vel_fbk;
         
-            if (o->interaction_mode == icubCanProto_interactionmode_stiff)
+            if (o->interaction_mode == eOmc_interactionmode_stiff)
             {
                 o->trq_err = o->trq_ref = ZERO;
                 
@@ -418,7 +418,7 @@ CTRL_UNITS Joint_do_vel_control(Joint* o)
             o->pos_err = o->pos_ref - o->pos_fbk;
             o->vel_err = o->vel_ref - o->vel_fbk;
         
-            if (o->interaction_mode == icubCanProto_interactionmode_stiff)
+            if (o->interaction_mode == eOmc_interactionmode_stiff)
             {
                 o->trq_err = o->trq_ref = ZERO;
                 

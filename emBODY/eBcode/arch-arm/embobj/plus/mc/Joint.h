@@ -60,8 +60,8 @@ typedef struct // Joint
     
     Trajectory trajectory;
     
-    uint8_t control_mode;
-    uint8_t interaction_mode;
+    eOmc_controlmode_t     control_mode;
+    eOmc_interactionmode_t interaction_mode;
     
     uint8_t motor_control_type;
     
@@ -94,8 +94,8 @@ extern int8_t Joint_pushing_limit(Joint* o);
 extern CTRL_UNITS Joint_do_pwm_control(Joint* o);
 extern CTRL_UNITS Joint_do_vel_control(Joint* o);
 
-extern BOOL Joint_set_control_mode(Joint* o, uint8_t control_mode);
-extern BOOL Joint_set_interaction_mode(Joint* o, uint8_t interaction_mode);
+extern BOOL Joint_set_control_mode(Joint* o, eOmc_controlmode_command_t control_mode);
+extern BOOL Joint_set_interaction_mode(Joint* o, eOmc_interactionmode_t interaction_mode);
 
 extern void Joint_set_impedance(Joint* o, eOmc_impedance_t* impedance);
 extern void Joint_get_impedance(Joint* o, eOmc_impedance_t* impedance);

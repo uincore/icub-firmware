@@ -39,8 +39,8 @@ void JointSet_init(JointSet* o) //
     
     o->absEncoder = NULL;
     
-    o->control_mode = icubCanProto_controlmode_notConfigured;
-    o->interaction_mode = icubCanProto_interactionmode_stiff;
+    o->control_mode     = eomc_controlmode_notConfigured;
+    o->interaction_mode = eOmc_interactionmode_stiff;
     
     o->motor_control_type = PWM_CONTROLLED_MOTOR; 
     
@@ -238,23 +238,23 @@ void JointSet_do(JointSet* o)
 
 static void JointSet_set_inner_control_flags(JointSet* o);
 
-BOOL JointSet_set_control_mode(JointSet* o, uint8_t control_mode)
+BOOL JointSet_set_control_mode(JointSet* o, eOmc_controlmode_command_t control_mode)
 {
     if (control_mode == o->control_mode) return TRUE;
     
-    if (o->control_mode == icubCanProto_controlmode_calibration) return FALSE;
+    if (o->control_mode == eomc_controlmode_calib) return FALSE;
     
-    if (o->control_mode == icubCanProto_controlmode_notConfigured) return FALSE;
+    if (o->control_mode == eomc_controlmode_notConfigured) return FALSE;
     
-    if (control_mode == icubCanProto_controlmode_openloop && o->motor_control_type != PWM_CONTROLLED_MOTOR) return FALSE;
+    if (control_mode == eomc_ctrlmval_openloop && o->motor_control_type != PWM_CONTROLLED_MOTOR) return FALSE;
     
-    if (control_mode == icubCanProto_controlmode_torque && !o->can_do_trq_ctrl) return FALSE;
+    if (control_mode == eomc_controlmode_torque && !o->can_do_trq_ctrl) return FALSE;
     
     int N = *(o->pN);
     
-    if (o->control_mode == icubCanProto_controlmode_hwFault)
+    if (o->control_mode == eomc_controlmode_hwFault)
     {
-        if (control_mode == icubCanProto_controlmode_forceIdle)
+        if (control_mode == eomc_controlmode_cmd_force_idle)
         {
             for (int k=0; k<N; ++k)
             {   
@@ -266,7 +266,7 @@ BOOL JointSet_set_control_mode(JointSet* o, uint8_t control_mode)
                 
                 Motor_force_idle(o->motor+o->motors_of_set[k]);
                 
-                Joint_set_control_mode(o->joint+o->joints_of_set[k], icubCanProto_controlmode_forceIdle);
+                Joint_set_control_mode(o->joint+o->joints_of_set[k], eomc_controlmode_cmd_force_idle);
             }
         }
         else
@@ -330,13 +330,14 @@ BOOL JointSet_set_control_mode(JointSet* o, uint8_t control_mode)
     }
     
     
-    o->control_mode = control_mode;    
+    o->control_mode = (eOmc_controlmode_t)control_mode;
+    
     JointSet_set_inner_control_flags(o);
     
     return TRUE;
 }
 
-void JointSet_set_interaction_mode(JointSet* o, uint8_t interaction_mode)
+void JointSet_set_interaction_mode(JointSet* o, eOmc_interactionmode_t interaction_mode)
 {
     if (interaction_mode == o->interaction_mode) return;
     
@@ -523,10 +524,10 @@ static void JointSet_set_inner_control_flags(JointSet* o)
 {
     switch (o->control_mode)
     {
-        case icubCanProto_controlmode_position:
-        case icubCanProto_controlmode_velocity:
-        case icubCanProto_controlmode_mixed:
-        case icubCanProto_controlmode_direct:
+        case eomc_controlmode_position:
+        case eomc_controlmode_velocity:
+        case eomc_controlmode_mixed:
+        case eomc_controlmode_direct:
             o->pos_control_active = TRUE;
         break;
         
@@ -534,11 +535,11 @@ static void JointSet_set_inner_control_flags(JointSet* o)
             o->pos_control_active = FALSE;
     }
     
-    if (o->control_mode==icubCanProto_controlmode_torque)
+    if (o->control_mode==eomc_controlmode_torque)
     {
         o->trq_control_active = TRUE;
     }
-    else if (o->pos_control_active && (o->interaction_mode==icubCanProto_interactionmode_compliant))
+    else if (o->pos_control_active && (o->interaction_mode==eOmc_interactionmode_compliant))
     {
         o->trq_control_active = TRUE;
     }
