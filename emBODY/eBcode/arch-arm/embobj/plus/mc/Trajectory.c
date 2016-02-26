@@ -21,8 +21,8 @@ void Trajectory_config_limits(Trajectory *o, float pos_min, float pos_max, float
 {
     o->pos_min = pos_min;
     o->pos_max = pos_max;
-    o->vel_max = vel_max;
-    o->acc_max = acc_max;
+    if (vel_max != 0.0f) o->vel_max = vel_max;
+    if (acc_max != 0.0f) o->acc_max = acc_max;
 }
 
 void Trajectory_init(Trajectory *o, int32_t p0, int32_t v0, int32_t a0)
@@ -42,7 +42,7 @@ void Trajectory_init(Trajectory *o, int32_t p0, int32_t v0, int32_t a0)
     o->bVelocityMove = FALSE;
 }
 
-void Trajectory_set_pos_raw(Trajectory *o, int32_t p0)
+void Trajectory_set_pos_raw(Trajectory *o, float p0)
 {
     LIMIT2(o->pos_min, p0, o->pos_max)
     
@@ -61,27 +61,30 @@ void Trajectory_set_pos_raw(Trajectory *o, int32_t p0)
     o->bVelocityMove = eobool_false;
 }
 
-void Trajectory_set_pos_end(Trajectory *o, int32_t x0, int32_t xStar, int32_t velAvg)
+void Trajectory_set_pos_end(Trajectory *o, /*float x0,*/ float xStar, float velAvg)
 {
+    //if (velAvg == 0.0f) return FALSE;
+    
     if (o->bVelocityMove || (o->vTimer < o->vT)) Trajectory_velocity_stop(o);
 
-    LIMIT2(o->pos_min, xStar, o->pos_max)
-
-    if (!velAvg) velAvg = o->vel_max;
+    //LIMIT2(o->pos_min, xStar, o->pos_max)
     
-    LIMIT(velAvg, o->vel_max)
+    //LIMIT(velAvg, o->vel_max)
     
     ///////////
     //o->xX = x0;
     ///////////
     
-    float D = (float)xStar - o->xX;
+    float D = xStar - o->xX;
     
-    if ((velAvg>0) ^ (D>0.0f)) velAvg = -velAvg;
+    if ((velAvg>0.0f) ^ (D>0.0f)) velAvg = -velAvg;
     
-    float V = (float)(2*velAvg);
+    //float V = 2.0f*velAvg;
 
-    o->xT = D/V;
+    velAvg *= 2.0f;
+    
+    //o->xT = D/V;
+    o->xT = D/velAvg;
     
     if (o->xT < CTRL_LOOP_PERIOD)
     {
@@ -99,35 +102,38 @@ void Trajectory_set_pos_end(Trajectory *o, int32_t x0, int32_t xStar, int32_t ve
     o->xInvT = 1.0f/o->xT;
     
     o->xK2 =  0.75f*(o->xV*o->xInvT+o->xA);
-    o->xK3 = -3.75f*(o->xV-V)*o->xInvT-1.25f*o->xA;
+    //o->xK3 = -3.75f*(o->xV-V)*o->xInvT-1.25f*o->xA;
+    o->xK3 = -3.75f*(o->xV-velAvg)*o->xInvT-1.25f*o->xA;
     float O5A = 0.5f*o->xA;
     o->xK0 = -o->xK2+O5A;
     o->xK1 = -o->xK3-O5A;
 }
 
-void Trajectory_set_vel_end(Trajectory *o, int32_t vStar, int32_t accAvg)
+void Trajectory_set_vel_end(Trajectory *o, float vStar, float accAvg)
 {
     o->bVelocityMove = eobool_true;
 
-    LIMIT(vStar, o->vel_max)
+    //LIMIT(vStar, o->vel_max)
     
-    if (!accAvg) accAvg = o->acc_max;
+    //if (accAvg == 0.0f) return;
     
-    LIMIT(accAvg, o->acc_max)
+    //LIMIT(accAvg, o->acc_max)
 
-    float D = (float)vStar - o->vV;
+    float D = vStar - o->vV;
     
-    if ((accAvg>0) ^ (D>0.0f)) accAvg=-accAvg;
+    if ((accAvg>0.0f) ^ (D>0.0f)) accAvg=-accAvg;
 
-    float A = (float)(2*accAvg);
-
-    o->vT = D/A;
+    //float A = (float)(2*accAvg);
+    
+    accAvg *= 2.0f;
+    
+    o->vT = D/accAvg;
 
     if (o->vT < CTRL_LOOP_PERIOD)
     {
         o->vTimer = o->vT = 0.0f;
         
-        o->vV = (float)vStar;
+        o->vV = vStar;
 		
 		o->vA = 0.0f;  
         
@@ -138,7 +144,7 @@ void Trajectory_set_vel_end(Trajectory *o, int32_t vStar, int32_t accAvg)
     o->vInvT  = 1.0f/o->vT;
     
     o->vK1 = -0.5f*o->vA;
-    o->vK0 = 0.75f*A+0.5f*o->vK1;
+    o->vK0 = 0.75f*accAvg+0.5f*o->vK1;
     o->vK2 = -o->vK0-o->vK1;
 }
 

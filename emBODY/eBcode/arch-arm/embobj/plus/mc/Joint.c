@@ -275,6 +275,14 @@ int8_t Joint_pushing_limit(Joint* o)
     return o->pushing_limit;
 }
 
+void Joint_set_limits(Joint* o, CTRL_UNITS pos_min, CTRL_UNITS pos_max)
+{
+    o->pos_min = pos_min;
+    o->pos_max = pos_max;
+    
+    Trajectory_config_limits(&o->trajectory, pos_min, pos_max, 0.0f, 0.0f);
+}
+
 CTRL_UNITS Joint_do_pwm_control(Joint* o)
 {
     o->pushing_limit = FALSE;
@@ -551,4 +559,70 @@ BOOL Joint_get_pid_state(Joint* o, eOmc_joint_status_ofpid_t* pid_state)
     }
     
     return trq_active;
+}
+
+BOOL Joint_set_pos_ref(Joint* o, CTRL_UNITS pos_ref, CTRL_UNITS vel_ref)
+{    
+    //if (NOT_READY()) return eobool_false; // TODOALE
+
+    if ((o->control_mode != eomc_controlmode_position) && (o->control_mode != eomc_controlmode_mixed))
+    {
+        return FALSE;
+    }
+    
+    LIMIT2(o->pos_min, pos_ref, o->pos_max);
+    
+    LIMIT(vel_ref, o->vel_max);
+    
+    o->pos_ref = pos_ref;
+    o->vel_ref = vel_ref;
+
+    if (vel_ref == 0.0f) return TRUE;
+    
+    Trajectory_set_pos_end(&o->trajectory, pos_ref, vel_ref);
+    
+    return TRUE;  
+}
+
+BOOL Joint_set_vel_ref(Joint* o, CTRL_UNITS vel_ref, CTRL_UNITS acc_ref)
+{
+    //if (NOT_READY()) return eobool_false; // TODOALE
+
+    if ((o->control_mode != eomc_controlmode_velocity) && (o->control_mode != eomc_controlmode_mixed))
+    {
+        return FALSE;
+    }
+    
+    LIMIT(vel_ref, o->vel_max);
+    LIMIT(acc_ref, o->acc_max);
+    
+    if (acc_ref == 0.0f)
+    {
+        Trajectory_velocity_stop(&o->trajectory);
+        
+        return TRUE;
+    }
+    
+    Trajectory_set_vel_end(&o->trajectory, vel_ref, acc_ref);
+    
+    return TRUE;
+}
+
+BOOL Joint_set_pos_raw(Joint* o, CTRL_UNITS pos_ref)
+{    
+    //if (NOT_READY()) return eobool_false; // TODOALE
+
+    if (o->control_mode != eomc_controlmode_direct)
+    {
+        return FALSE;
+    }
+    
+    LIMIT2(o->pos_min, pos_ref, o->pos_max);
+    
+    o->pos_ref = pos_ref;
+    o->vel_ref = 0.0f;
+    
+    Trajectory_set_pos_raw(&o->trajectory, pos_ref);
+    
+    return TRUE;  
 }

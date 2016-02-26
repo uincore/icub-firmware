@@ -10,8 +10,8 @@ typedef struct // Trajectory
     float pos_min;
     float pos_max;
     
-    int32_t vel_max;
-    int32_t acc_max;
+    float vel_max;
+    float acc_max;
     
     //////////////////
     // position
@@ -46,9 +46,9 @@ extern Trajectory* Trajectory_new(uint8_t n);
 
 extern void Trajectory_config_limits(Trajectory *o, float pos_min, float pos_max, float vel_max, float acc_max);
 
-extern void Trajectory_set_pos_end(Trajectory *o, int32_t p0, int32_t p1, int32_t avg_vel);
-extern void Trajectory_set_vel_end(Trajectory *o, int32_t v1, int32_t avg_acc);
-extern void Trajectory_set_pos_raw(Trajectory *o, int32_t p0);
+extern void Trajectory_set_pos_end(Trajectory *o, float p1, float avg_vel);
+extern void Trajectory_set_vel_end(Trajectory *o, float v1, float avg_acc);
+extern void Trajectory_set_pos_raw(Trajectory *o, float p0);
 
 extern int8_t Trajectory_do_step(Trajectory *o, float *p, float *v, float *a);
 

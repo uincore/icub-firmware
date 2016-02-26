@@ -147,9 +147,17 @@ void Controller_config_joint(int j, eOmc_joint_config_t* config) //
 
 void Controller_config_motor(int m, uint8_t hardware_type, uint8_t motor_control_type, eOmc_motor_config_t* config) //
 {
-    MController *o = smc;
-    
-    Motor_config(o->motor+m, m, hardware_type, motor_control_type, config);
+    Motor_config(smc->motor+m, m, hardware_type, motor_control_type, config);
+}
+
+void Controller_config_motor_friction(int m, eOmc_motor_params_t* friction) //
+{
+    Motor_config_friction(smc->motor+m, friction->bemf_value, friction->ktau_value);
+}
+
+void Controller_config_joint_impedance(int j, eOmc_impedance_t* impedance) //
+{
+    Joint_set_impedance(smc->joint+j, impedance);
 }
 
 void Controller_config_absEncoder(uint8_t j, int32_t resolution, int16_t spike_limit) //
@@ -551,13 +559,13 @@ uint32_t Controller_get_motor_fault_mask(uint8_t m)
     return Motor_get_fault_mask(smc->motor+m);
 }
 
-void Controller_get_joint_state(uint8_t j, eOmc_joint_status_t* joint_state)
+void Controller_get_joint_state(int j, eOmc_joint_status_t* joint_state)
 {
     Joint_get_state(smc->joint+j, joint_state);
 }
 
 
-void Controller_get_pid_state(uint8_t j, eOmc_joint_status_ofpid_t* pid_state, BOOL decoupled_pwm)
+void Controller_get_pid_state(int j, eOmc_joint_status_ofpid_t* pid_state, BOOL decoupled_pwm)
 {    
     if (Joint_get_pid_state(smc->joint+j, pid_state))
     {
@@ -570,19 +578,54 @@ void Controller_get_pid_state(uint8_t j, eOmc_joint_status_ofpid_t* pid_state, B
     }
 }
 
-void Controller_get_motor_state(uint8_t m, eOmc_motor_status_t* motor_status)
+void Controller_get_motor_state(int m, eOmc_motor_status_t* motor_status)
 {
     Motor_get_state(smc->motor+m, motor_status);
 }
 
-void Controller_update_motor_pos_fbk(uint8_t m, int32_t position)
+void Controller_update_motor_pos_fbk(int m, int32_t position)
 {
     Motor_update_pos_fbk(smc->motor+m, position);
 }
 
-void Controller_update_motor_current_fbk(uint8_t m, int16_t current)
+void Controller_update_motor_current_fbk(int m, int16_t current)
 {
     Motor_update_current_fbk(smc->motor+m, current);
+}
+
+void Controller_config_pos_pid(int j, eOmc_PID_t *pid_conf)
+{
+    PID_config(&smc->joint[j].posPID, pid_conf);
+}
+
+void Controller_config_trq_pid(int m, eOmc_PID_t *pid_conf)
+{
+    PID_config(&smc->motor[m].trqPID, pid_conf);
+}
+
+void Controller_config_joint_pos_limits(int j, int32_t pos_min, int32_t pos_max)
+{
+    Joint_set_limits(smc->joint+j, pos_min, pos_max);
+}
+
+void Controller_config_joint_vel_ref_timeout(int j, int32_t timeout_ms)
+{
+    WatchDog_set_base_time_msec(&smc->joint[j].vel_ref_wdog, timeout_ms);
+}
+
+BOOL Controller_set_joint_pos_ref(int j, CTRL_UNITS pos_ref, CTRL_UNITS vel_ref)
+{
+    return Joint_set_pos_ref(smc->joint+j, pos_ref, vel_ref);
+}
+
+BOOL Controller_set_joint_vel_ref(int j, CTRL_UNITS vel_ref, CTRL_UNITS acc_ref)
+{
+    return Joint_set_vel_ref(smc->joint+j, vel_ref, acc_ref);
+}
+
+BOOL Controller_set_joint_pos_raw(int j, CTRL_UNITS pos_ref)
+{
+    return Joint_set_pos_raw(smc->joint+j, pos_ref);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

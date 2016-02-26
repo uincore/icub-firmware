@@ -99,11 +99,20 @@ extern void Controller_go_idle(void);
 ////////////////////////////////////////////////////////////////////////
 //extern void Controller_get_motor_control_state(uint8_t m, uint8_t* control_state, uint8_t* control_state_req);
 extern uint32_t Controller_get_motor_fault_mask(uint8_t m);
-extern void Controller_get_joint_state(uint8_t j, eOmc_joint_status_t* joint_state);
-extern void Controller_get_pid_state(uint8_t j, eOmc_joint_status_ofpid_t* pid_state, BOOL decoupled_pwm);
-extern void Controller_get_motor_state(uint8_t m, eOmc_motor_status_t* motor_status);
-extern void Controller_update_motor_pos_fbk(uint8_t m, int32_t position);
-extern void Controller_update_motor_current_fbk(uint8_t m, int16_t current);
+extern void Controller_get_joint_state(int j, eOmc_joint_status_t* joint_state);
+extern void Controller_get_pid_state(int j, eOmc_joint_status_ofpid_t* pid_state, BOOL decoupled_pwm);
+extern void Controller_get_motor_state(int m, eOmc_motor_status_t* motor_status);
+extern void Controller_update_motor_pos_fbk(int m, int32_t position);
+extern void Controller_update_motor_current_fbk(int m, int16_t current);
+extern void Controller_config_motor_friction(int m, eOmc_motor_params_t* friction); //
+extern void Controller_config_joint_impedance(int j, eOmc_impedance_t* impedance); //
+extern void Controller_config_pos_pid(int j, eOmc_PID_t *pid_conf); //
+extern void Controller_config_trq_pid(int m, eOmc_PID_t *pid_conf); //
+extern void Controller_config_joint_pos_limits(int j, int32_t pos_min, int32_t pos_max);
+extern void Controller_config_joint_vel_ref_timeout(int j, int32_t timeout_ms);
+extern BOOL Controller_set_joint_pos_ref(int j, CTRL_UNITS pos_ref, CTRL_UNITS vel_ref);
+extern BOOL Controller_set_joint_vel_ref(int j, CTRL_UNITS vel_ref, CTRL_UNITS acc_ref);
+extern BOOL Controller_set_joint_pos_raw(int j, CTRL_UNITS pos_ref);
 ////////////////////////////////////////////////////////////////////////
 
 #endif

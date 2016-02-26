@@ -91,6 +91,8 @@ extern void Joint_clear_faults(Joint* o);
 extern int8_t Joint_check_limits(Joint* o);
 extern int8_t Joint_pushing_limit(Joint* o);
 
+extern void Joint_set_limits(Joint* o, CTRL_UNITS pos_min, CTRL_UNITS pos_max);
+
 extern CTRL_UNITS Joint_do_pwm_control(Joint* o);
 extern CTRL_UNITS Joint_do_vel_control(Joint* o);
 
@@ -103,5 +105,9 @@ extern void Joint_get_impedance(Joint* o, eOmc_impedance_t* impedance);
 extern void Joint_get_state(Joint* o, eOmc_joint_status_t* joint_state);
 
 extern BOOL Joint_get_pid_state(Joint* o, eOmc_joint_status_ofpid_t* pid_state);
+
+extern BOOL Joint_set_pos_ref(Joint* o, CTRL_UNITS pos_ref, CTRL_UNITS vel_ref);
+extern BOOL Joint_set_vel_ref(Joint* o, CTRL_UNITS vel_ref, CTRL_UNITS acc_ref);
+extern BOOL Joint_set_pos_raw(Joint* o, CTRL_UNITS pos_ref);
 
 #endif
