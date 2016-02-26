@@ -61,6 +61,7 @@ extern "C" {
 
 #define AEA_DEFAULT_SPIKE_LIMIT 112 // 7*16 = 7*65536/resolution 
     
+#define CTRL_LOOP_FREQUENCY_INT 1000  
 #define CTRL_LOOP_FREQUENCY  1000.0f
 #define CTRL_LOOP_PERIOD     0.001f
     

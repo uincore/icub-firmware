@@ -698,7 +698,7 @@ static const eOmn_serv_configuration_t s_serv_config_mc_eb7_eb9 =
 };
 
 
-
+#ifdef INCLUDE_NEVER_REFERENCED
 static const eOmn_serv_configuration_t s_serv_config_mc_cer_eb15 =
 {   // eb15
     .type       = eomn_serv_MC_foc,
@@ -1932,7 +1932,7 @@ static const eOmn_serv_configuration_t s_serv_config_mc_cer_testOfmc2plus =
         }                    
     }
 };
-
+#endif // INCLUDE_NEVER_REFERENCED
 
 static const eOmn_serv_configuration_t s_serv_config_as_mais_eb2_eb4 =  
 {   // eb2/2b4
@@ -2045,6 +2045,7 @@ static const eOmn_serv_configuration_t * const s_serv_config_mc_V2[maxboards_V2]
 };
 
 enum {maxboards_V3 = 22};
+#ifdef INCLUDE_NEVER_REFERENCED
 static const eOmn_serv_configuration_t * const s_serv_config_mc_V3[maxboards_V3] =
 {   // there are only ....   
     &s_serv_config_mc_v3_0B9,       // board ip.1, 0b9, face 4 lips
@@ -2070,10 +2071,12 @@ static const eOmn_serv_configuration_t * const s_serv_config_mc_V3[maxboards_V3]
     NULL, 
     &s_serv_config_mc_cer_testOfmc2plus // moved at address .22  
 };
-
+#endif
 
 
 enum {maxboards_CER = 21};
+
+#ifdef INCLUDE_NEVER_REFERENCED
 static const eOmn_serv_configuration_t * const s_serv_config_mc_CER[maxboards_CER] =
 {   // there are only eb15 and eb21 .   
     NULL,
@@ -2098,7 +2101,7 @@ static const eOmn_serv_configuration_t * const s_serv_config_mc_CER[maxboards_CE
     NULL,
     &s_serv_config_mc_cer_eb21    
 };
-
+#endif
 
 
 // --------------------------------------------------------------------------------------------------------------------

@@ -65,12 +65,15 @@
 // - declaration of static functions
 // --------------------------------------------------------------------------------------------------------------------
 static void s_eo_currents_watchdog_CheckSpike(uint8_t joint, int16_t value);
+#ifdef INCLUDE_NEVER_REFERENCED
 static void s_eo_currents_watchdog_CheckI2T(uint8_t joint, int16_t value);
+#endif
 static void s_eo_currents_watchdog_UpdateMotorCurrents(uint8_t joint, int16_t value);
+#ifdef INCLUDE_NEVER_REFERENCED
 EO_static_inline uint32_t s_eo_currents_watchdog_averageCalc_addValue(uint8_t motor, int16_t value);
 EO_static_inline void s_eo_currents_watchdog_averageCalc_reset(uint8_t motor);
 EO_static_inline eObool_t s_eo_currents_watchdog_averageCalc_collectDataIsCompleted(uint8_t motor);
-
+#endif
 
 // --------------------------------------------------------------------------------------------------------------------
 // - definition (and initialisation) of static variables
@@ -225,12 +228,11 @@ extern void eo_currents_watchdog_TickSupplyVoltage(EOCurrentsWatchdog* p)
 // - definition of static functions 
 // --------------------------------------------------------------------------------------------------------------------
 
-
 static void s_eo_currents_watchdog_UpdateMotorCurrents(uint8_t motor, int16_t value)
 {
-    eo_emsController_AcquireMotorCurrent(motor, value);  
+    //eo_emsController_AcquireMotorCurrent(motor, value);
+    Controller_update_motor_current_fbk(motor, value);
 }
-
 
 static void s_eo_currents_watchdog_CheckSpike(uint8_t motor, int16_t value)
 {
@@ -251,13 +253,15 @@ static void s_eo_currents_watchdog_CheckSpike(uint8_t motor, int16_t value)
             //simulate the CANframe used by 2FOC to signal the status
             uint64_t fault_mask = (((uint64_t)(current_state | MOTOR_OVERCURRENT_FAULT)) << 32) & 0xFFFFFFFF00000000; //adding the error to the current state
             fault_mask |= icubCanProto_controlmode_hwFault; //setting the hard fault of the motor
-            eo_motor_set_motor_status( eo_motors_GetHandle(), motor, (uint8_t*)&fault_mask);
+            //eo_motor_set_motor_status( eo_motors_GetHandle(), motor, (uint8_t*)&fault_mask);
+            Controller_update_motor_state_fbk(motor, &fault_mask);
         }
     }
     
     return;
 }
 
+#ifdef INCLUDE_NEVER_REFERENCED
 static void s_eo_currents_watchdog_CheckI2T(uint8_t motor, int16_t value)
 {
 	// apply a simple LOW-PASS filter and if the value is above a threshold signal the error
@@ -312,7 +316,8 @@ static void s_eo_currents_watchdog_CheckI2T(uint8_t motor, int16_t value)
             //simulate the CANframe used by 2FOC to signal the status
             uint64_t fault_mask = (((uint64_t)(current_state | MOTOR_I2T_LIMIT_FAULT)) << 32) & 0xFFFFFFFF00000000; //adding the error to the current state
             fault_mask |= icubCanProto_controlmode_hwFault; //setting the hard fault of the motor
-            eo_motor_set_motor_status( eo_motors_GetHandle(), motor, (uint8_t*)&fault_mask);
+            //eo_motor_set_motor_status( eo_motors_GetHandle(), motor, (uint8_t*)&fault_mask);
+            Controller_update_motor_state_fbk(motor, &fault_mask);
         }
     }
     
@@ -320,6 +325,8 @@ static void s_eo_currents_watchdog_CheckI2T(uint8_t motor, int16_t value)
     s_eo_currents_watchdog_averageCalc_reset(motor);
 
 }
+#endif
+
 #define I2T_CHECK_USE_AVERAGE_CURRENT
 
 #ifdef I2T_CHECK_USE_AVERAGE_CURRENT 
@@ -338,23 +345,25 @@ cma_n+1 = cma_n + ( (x_n+1 -cma_n) / (n+1) )
 see: https://en.wikipedia.org/wiki/Moving_average
 
 */
+#ifdef INCLUDE_NEVER_REFERENCED
 EO_static_inline uint32_t s_eo_currents_watchdog_averageCalc_addValue(uint8_t motor, int16_t value)
 {
     s_eo_currents_watchdog.avgCurrent[motor].counter++;
     s_eo_currents_watchdog.avgCurrent[motor].commulativeAverage += (value - s_eo_currents_watchdog.avgCurrent[motor].commulativeAverage)/s_eo_currents_watchdog.avgCurrent[motor].counter ;
     return(s_eo_currents_watchdog.avgCurrent[motor].commulativeAverage); 
 }
-
+#endif
+#ifdef INCLUDE_NEVER_REFERENCED
 EO_static_inline void s_eo_currents_watchdog_averageCalc_reset(uint8_t motor)
 {
     s_eo_currents_watchdog.avgCurrent[motor].counter = 0;
     s_eo_currents_watchdog.avgCurrent[motor].commulativeAverage = 0;
 }
-
 EO_static_inline eObool_t s_eo_currents_watchdog_averageCalc_collectDataIsCompleted(uint8_t motor)
 {
     return(s_eo_currents_watchdog.avgCurrent[motor].counter==FILTER_WINDOW);
 }
+#endif
 
 #else
 

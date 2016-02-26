@@ -54,7 +54,6 @@ extern void Controller_config_Jjm(float **Jjm); //
 extern void Controller_config_Jje(float **Jje); //
 
 extern void Controller_update_motor_state_fbk(uint8_t m, void* state);
-
 extern void Controller_update_joint_torque_fbk(uint8_t j, CTRL_UNITS trq_fbk); //
 extern void Controller_update_absEncoder_fbk(uint8_t e, int32_t position); //
 extern void Controller_invalid_absEncoder_fbk(uint8_t e, uint8_t error_flags);
@@ -96,5 +95,15 @@ typedef eOmc_calibrator32_t eOmc_calibrator_t;
 extern void Controller_calibrate_encoder(uint8_t e, eOmc_calibrator_t *calibrator);
 
 extern void Controller_go_idle(void);
+
+////////////////////////////////////////////////////////////////////////
+//extern void Controller_get_motor_control_state(uint8_t m, uint8_t* control_state, uint8_t* control_state_req);
+extern uint32_t Controller_get_motor_fault_mask(uint8_t m);
+extern void Controller_get_joint_state(uint8_t j, eOmc_joint_status_t* joint_state);
+extern void Controller_get_pid_state(uint8_t j, eOmc_joint_status_ofpid_t* pid_state, BOOL decoupled_pwm);
+extern void Controller_get_motor_state(uint8_t m, eOmc_motor_status_t* motor_status);
+extern void Controller_update_motor_pos_fbk(uint8_t m, int32_t position);
+extern void Controller_update_motor_current_fbk(uint8_t m, int16_t current);
+////////////////////////////////////////////////////////////////////////
 
 #endif

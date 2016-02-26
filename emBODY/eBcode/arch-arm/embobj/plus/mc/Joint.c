@@ -282,14 +282,16 @@ CTRL_UNITS Joint_do_pwm_control(Joint* o)
     switch (o->control_mode)
     {
         case eomc_controlmode_openloop:
+        {
             o->pos_err = o->pos_ref = ZERO;
             o->vel_err = o->vel_ref = ZERO;
             o->trq_err = o->trq_ref = ZERO;
         
             o->output = o->out_ref;
             break;
- 
+        }
         case eomc_controlmode_torque:
+        {
             o->pos_err = o->pos_ref = ZERO;
             o->vel_err = o->vel_ref = ZERO;
             o->trq_err = o->trq_ref - o->trq_fbk;
@@ -312,16 +314,18 @@ CTRL_UNITS Joint_do_pwm_control(Joint* o)
             }
         
             break;
-        
+        }
         case eomc_controlmode_velocity:
-        case eomc_controlmode_mixed:        
+        case eomc_controlmode_mixed:
+        {
             if (WatchDog_check_expired(&o->vel_ref_wdog))
             {
                 Trajectory_velocity_stop(&o->trajectory);
             }
+        }
         case eomc_controlmode_position:
         case eomc_controlmode_direct:
-            
+        {    
             Trajectory_do_step(&o->trajectory, &o->pos_ref, &o->vel_ref, &o->acc_ref);
         
             CTRL_UNITS pos_err_old = o->pos_err;
@@ -359,14 +363,16 @@ CTRL_UNITS Joint_do_pwm_control(Joint* o)
             }
             
             break;
-            
+        }    
         default:
+        {
             o->pos_err = o->pos_ref = ZERO;
             o->vel_err = o->vel_ref = ZERO;
             o->trq_err = o->trq_ref = ZERO;
             
             o->output = ZERO;
             break;
+        }
     }
     
     return o->output;
@@ -379,6 +385,7 @@ CTRL_UNITS Joint_do_vel_control(Joint* o)
     switch (o->control_mode)
     { 
         case eomc_controlmode_torque:
+        {
             o->pos_err = o->pos_ref = ZERO;
             o->vel_err = o->vel_ref = ZERO;
             o->trq_err = o->trq_ref - o->trq_fbk;
@@ -401,19 +408,21 @@ CTRL_UNITS Joint_do_vel_control(Joint* o)
             o->output = o->vel_ref;
 
             break;
-        
+        }
         case eomc_controlmode_velocity:
-        case eomc_controlmode_mixed:        
+        case eomc_controlmode_mixed:
+        {            
             if (WatchDog_check_expired(&o->vel_ref_wdog))
             {
                 Trajectory_velocity_stop(&o->trajectory);
             }
+        }
         case eomc_controlmode_position:
         case eomc_controlmode_direct:
-            
+        {    
             Trajectory_do_step(&o->trajectory, &o->pos_ref, &o->vel_ref, &o->acc_ref);
         
-            CTRL_UNITS pos_err_old = o->pos_err;
+            //CTRL_UNITS pos_err_old = o->pos_err;
         
             o->pos_err = o->pos_ref - o->pos_fbk;
             o->vel_err = o->vel_ref - o->vel_fbk;
@@ -462,14 +471,16 @@ CTRL_UNITS Joint_do_vel_control(Joint* o)
             }
             
             break;
-            
+        }    
         default:
+        {
             o->pos_err = o->pos_ref = ZERO;
             o->vel_err = o->vel_ref = ZERO;
             o->trq_err = o->trq_ref = ZERO;
             
             o->output = ZERO;
             break;
+        }
     }
     
     return o->output;
@@ -496,4 +507,48 @@ void Joint_get_impedance(Joint* o, eOmc_impedance_t* impedance)
     impedance->stiffness = (eOmeas_stiffness_t)(1000.0f*o->tcKstiff);
     impedance->damping   = (eOmeas_damping_t)(1000.0f*CTRL_LOOP_PERIOD*o->tcKdamp);
     impedance->offset    = (eOmeas_torque_t)(o->tcKoffset);
+}
+
+void Joint_get_state(Joint* o, eOmc_joint_status_t* joint_state)
+{
+    joint_state->core.modes.interactionmodestatus    = o->interaction_mode;
+    joint_state->core.modes.controlmodestatus        = o->control_mode;
+    joint_state->core.modes.ismotiondone             = Trajectory_is_done(&o->trajectory);
+    joint_state->core.measures.meas_position         = o->pos_fbk;           
+    joint_state->core.measures.meas_velocity         = o->vel_fbk;        
+    joint_state->core.measures.meas_acceleration     = 0; // not implemented      
+    joint_state->core.measures.meas_torque           = o->trq_fbk;
+}
+
+BOOL Joint_get_pid_state(Joint* o, eOmc_joint_status_ofpid_t* pid_state)
+{
+    BOOL trq_active = FALSE;
+    
+    if (o->pos_control_active)
+    {
+        pid_state->complpos.refpos = o->pos_ref;
+        pid_state->complpos.errpos = o->pos_err;
+    }
+    else
+    {
+        pid_state->complpos.refpos = 0;
+        pid_state->complpos.errpos = 0;
+    }
+    
+    if (o->trq_control_active)
+    {
+        trq_active = TRUE;
+        
+        pid_state->complpos.reftrq = o->trq_ref;
+        pid_state->complpos.errtrq = o->trq_err;
+    }
+    else
+    {
+        pid_state->complpos.reftrq = 0;
+        pid_state->complpos.errtrq = 0;
+        
+        pid_state->complpos.output = o->output;
+    }
+    
+    return trq_active;
 }

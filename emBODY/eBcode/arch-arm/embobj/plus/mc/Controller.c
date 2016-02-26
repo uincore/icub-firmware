@@ -351,10 +351,8 @@ void Controller_set_interaction_mode(uint8_t j, eOmc_interactionmode_t interacti
 // - definition of static functions 
 // --------------------------------------------------------------------------------------------------------------------
 
-static void Controller_config_motor_set()
+static void Controller_config_motor_set(MController *o)
 {
-    MController *o = smc;
-    
     int N = o->nJoints;
     
     uint8_t set_dim[MAX_PER_BOARD];
@@ -387,10 +385,8 @@ static void Controller_config_motor_set()
     }
 }
 
-static void Controller_config_encoder_set()
+static void Controller_config_encoder_set(MController *o)
 {
-    MController *o = smc;
-    
     int N = o->nJoints;
     
     uint8_t set_dim[MAX_PER_BOARD];
@@ -540,3 +536,53 @@ void Controller_go_idle(void)
         JointSet_set_control_mode(smc->jointSet+s, eomc_controlmode_cmd_force_idle);
     }
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
+/*
+void Controller_get_motor_control_state(uint8_t m, uint8_t* control_state, uint8_t* control_state_req)
+{
+    Motor_get_control_state(smc->motor+m, control_state, control_state_req);
+}
+*/
+
+uint32_t Controller_get_motor_fault_mask(uint8_t m)
+{
+    return Motor_get_fault_mask(smc->motor+m);
+}
+
+void Controller_get_joint_state(uint8_t j, eOmc_joint_status_t* joint_state)
+{
+    Joint_get_state(smc->joint+j, joint_state);
+}
+
+
+void Controller_get_pid_state(uint8_t j, eOmc_joint_status_ofpid_t* pid_state, BOOL decoupled_pwm)
+{    
+    if (Joint_get_pid_state(smc->joint+j, pid_state))
+    {
+        Motor_get_pid_state(smc->motor+j, pid_state);
+    }
+    
+    if (decoupled_pwm)
+    {
+        pid_state->complpos.output = smc->motor[j].output;
+    }
+}
+
+void Controller_get_motor_state(uint8_t m, eOmc_motor_status_t* motor_status)
+{
+    Motor_get_state(smc->motor+m, motor_status);
+}
+
+void Controller_update_motor_pos_fbk(uint8_t m, int32_t position)
+{
+    Motor_update_pos_fbk(smc->motor+m, position);
+}
+
+void Controller_update_motor_current_fbk(uint8_t m, int16_t current)
+{
+    Motor_update_current_fbk(smc->motor+m, current);
+}
+
+////////////////////////////////////////////////////////////////////////////////

@@ -130,6 +130,9 @@ typedef struct //Motor
     int32_t pos_fbk;
     int32_t pos_err;
     
+    int32_t pos_fbk_old;
+    int32_t enc_sign;
+    
     int32_t vel_max;
     int32_t vel_ref;
     int32_t vel_fbk;
@@ -196,6 +199,12 @@ extern void Motor_set_Iqq_ref(Motor* o, int32_t Iqq_ref);
 //extern void Motor_set_pos_ref(Motor* o, int32_t vel_ref);
 extern void Motor_set_vel_ref(Motor* o, int32_t vel_ref);
 //extern void Motor_set_trq_ref(Motor* o, CTRL_UNITS trq_ref);
+
+extern uint32_t Motor_get_fault_mask(Motor* o);
+extern void Motor_get_pid_state(Motor* o, eOmc_joint_status_ofpid_t* pid_state);
+extern void Motor_get_state(Motor* o, eOmc_motor_status_t* motor_status);
+extern void Motor_update_pos_fbk(Motor* o, int32_t position);
+extern void Motor_update_current_fbk(Motor* o, int16_t current);
 
 /*
 extern void Motor_update_temperature_fbk(Motor* o, int16_t temperature_fbk);

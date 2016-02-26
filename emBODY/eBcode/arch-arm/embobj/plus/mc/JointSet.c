@@ -518,6 +518,8 @@ static BOOL JointSet_do_wait_calibration(JointSet* o)
             return FALSE;
         }
     }
+    
+    return TRUE;
 }
 
 static void JointSet_set_inner_control_flags(JointSet* o)

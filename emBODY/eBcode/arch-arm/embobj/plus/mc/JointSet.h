@@ -67,4 +67,6 @@ extern void JointSet_do(JointSet* o);
 extern BOOL JointSet_set_control_mode(JointSet* o, eOmc_controlmode_command_t control_mode);
 extern void JointSet_set_interaction_mode(JointSet* o, eOmc_interactionmode_t interaction_mode);
 
+extern void JointSet_calibrate(JointSet* o, uint8_t e, eOmc_calibrator_t *calibrator);
+    
 #endif

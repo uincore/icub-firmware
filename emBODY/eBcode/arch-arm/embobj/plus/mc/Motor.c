@@ -25,9 +25,11 @@ static void Motor_new_state_req(Motor *o, icubCanProto_controlmode_t control_mod
     WatchDog_rearm(&o->control_mode_req_wdog);
 }
 
+/*
 static void Motor_config_MC4p(uint8_t motor, eOmc_motor_config_t* config)
 {
 }
+*/
 
 static void Motor_config_2FOC(uint8_t motor, eOmc_motor_config_t* config)
 {   
@@ -130,6 +132,8 @@ void Motor_config(Motor* o, uint8_t ID, uint8_t HARDWARE_TYPE, uint8_t MOTOR_CON
     o->MOTOR_CONTROL_TYPE = MOTOR_CONTROL_TYPE;
     o->GEARBOX            = config->gearboxratio;
     o->HAS_TEMP_SENSOR    = config->hasTempSensor;
+    
+    o->enc_sign = config->rotorEncoderResolution >= 0 ? 1 : -1; 
     
     o->temperature_max = config->temperatureLimit;
 
@@ -309,7 +313,7 @@ void Motor_update_state_fbk(Motor* o, void* state) //
     WatchDog_rearm(&o->can_2FOC_alive_wdog);
    
     o->fault_state_mask = state_msg->fault_state.bitmask;
-    o->control_mode     = state_msg->control_mode; 
+    o->control_mode     = (icubCanProto_controlmode_t)state_msg->control_mode; 
     o->pwm_fbk          = state_msg->pwm_fbk;
     o->qe_state_mask    = state_msg->qe_state.bitmask;
     o->not_calibrated   = state_msg->qe_state.bits.not_calibrated;
@@ -356,7 +360,7 @@ void Motor_actuate(Motor* motor, uint8_t N) //
     {
         for (int m=0; m<N; ++m)
         {
-            hal_motor_pwmset(motor[m].ID, motor[m].output);
+            hal_motor_pwmset((hal_motor_t)motor[m].ID, motor[m].output);
         }
     }
 }  
@@ -385,6 +389,59 @@ void Motor_set_trq_ref(Motor* o, CTRL_UNITS trq_ref)
     o->trq_ref = trq_ref; 
 }
 */
+
+uint32_t Motor_get_fault_mask(Motor* o)
+{
+    return o->fault_state_mask;
+}
+
+void Motor_get_pid_state(Motor* o, eOmc_joint_status_ofpid_t* pid_state)
+{
+    pid_state->complpos.reftrq = o->trq_ref;
+    pid_state->complpos.errtrq = o->trq_err;
+    pid_state->complpos.output = o->output;
+}
+
+void Motor_get_state(Motor* o, eOmc_motor_status_t* motor_status)
+{
+    motor_status->basic.mot_position = o->pos_raw_fbk;
+    motor_status->basic.mot_velocity = o->vel_raw_fbk;
+    motor_status->basic.mot_acceleration = 0; // not implemented
+    motor_status->basic.mot_current  = o->Iqq_fbk;    
+    motor_status->basic.mot_pwm      = o->pwm_fbk;
+}
+
+void Motor_update_pos_fbk(Motor* o, int32_t position)
+{    
+    //valid for init
+    if ((o->pos_fbk == 0) && (o->pos_fbk_old == 0))
+    {
+        o->pos_fbk     = position;
+        o->pos_fbk_old = position;
+        
+        return;
+    }
+    
+    //direction of movement changes depending on the sign
+    int32_t delta = o->enc_sign * (position - o->pos_fbk_old);
+    
+    //normalize delta to avoid discontinuities
+    while (delta < -TICKS_PER_HALF_REVOLUTION) delta += TICKS_PER_REVOLUTION;
+    while (delta >  TICKS_PER_HALF_REVOLUTION) delta -= TICKS_PER_REVOLUTION;
+        
+    o->pos_fbk += delta;
+    
+    //update velocity
+    o->vel_fbk = delta*CTRL_LOOP_FREQUENCY_INT;
+    
+    //update last position for next iteration
+    o->pos_fbk_old = position;
+}
+
+void Motor_update_current_fbk(Motor* o, int16_t current)
+{
+    o->Iqq_fbk = current;
+}
 
 /*
 void Motor_update_temperature_fbk(Motor* o, int16_t temperature_fbk) { o->temperature_fbk = temperature_fbk; }
