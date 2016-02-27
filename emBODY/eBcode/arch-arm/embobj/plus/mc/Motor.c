@@ -267,7 +267,7 @@ BOOL Motor_check_faults(Motor* o) //
 {
     BOOL fault = FALSE;
     
-    if (o->fault_state_mask)
+    if (o->fault_state.bitmask)
     {
         fault = TRUE;
     }
@@ -293,7 +293,7 @@ BOOL Motor_check_faults(Motor* o) //
 
 extern void Motor_clear_faults(Motor* o)
 {
-    o->fault_state_mask = 0;
+    o->fault_state.bitmask = 0;
 }
 
 CTRL_UNITS Motor_do_trq_control(Motor* o, CTRL_UNITS trq_ref, CTRL_UNITS trq_fbk) //
@@ -312,11 +312,11 @@ void Motor_update_state_fbk(Motor* o, void* state) //
     
     WatchDog_rearm(&o->can_2FOC_alive_wdog);
    
-    o->fault_state_mask = state_msg->fault_state.bitmask;
-    o->control_mode     = (icubCanProto_controlmode_t)state_msg->control_mode; 
-    o->pwm_fbk          = state_msg->pwm_fbk;
-    o->qe_state_mask    = state_msg->qe_state.bitmask;
-    o->not_calibrated   = state_msg->qe_state.bits.not_calibrated;
+    o->fault_state.bitmask = state_msg->fault_state.bitmask;
+    o->control_mode        = (icubCanProto_controlmode_t)state_msg->control_mode; 
+    o->pwm_fbk             = state_msg->pwm_fbk;
+    o->qe_state_mask       = state_msg->qe_state.bitmask;
+    o->not_calibrated      = state_msg->qe_state.bits.not_calibrated;
 }
 
 void Motor_update_odometry_fbk_can(Motor* o, CanOdometry2FocMsg* can_msg) //
@@ -392,7 +392,7 @@ void Motor_set_trq_ref(Motor* o, CTRL_UNITS trq_ref)
 
 uint32_t Motor_get_fault_mask(Motor* o)
 {
-    return o->fault_state_mask;
+    return o->fault_state.bitmask;
 }
 
 void Motor_get_pid_state(Motor* o, eOmc_joint_status_ofpid_t* pid_state)
@@ -441,6 +441,32 @@ void Motor_update_pos_fbk(Motor* o, int32_t position)
 void Motor_update_current_fbk(Motor* o, int16_t current)
 {
     o->Iqq_fbk = current;
+}
+
+void Motor_config_gearbox_ratio(Motor* o, int32_t gearbox_ratio)
+{
+    o->GEARBOX = gearbox_ratio;
+}
+
+int16_t Motor_config_pwm_limit(Motor* o, int16_t pwm_limit)
+{
+    if (o->HARDWARE_TYPE == HARDWARE_2FOC)
+    {
+        if (pwm_limit > 32000) pwm_limit = 32000;
+    }
+    else if (o->HARDWARE_TYPE == HARDWARE_MC4p)
+    {
+        if (pwm_limit > 3360) pwm_limit = 3360; 
+    }
+    
+    o->pwm_max = pwm_limit;
+    
+    return pwm_limit;
+}
+
+void Motor_set_overcurrent_fault(Motor* o)
+{
+    o->fault_state.bits.OverCurrentFailure = TRUE;
 }
 
 /*

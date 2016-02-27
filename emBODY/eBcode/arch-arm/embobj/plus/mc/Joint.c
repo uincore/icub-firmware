@@ -626,3 +626,33 @@ BOOL Joint_set_pos_raw(Joint* o, CTRL_UNITS pos_ref)
     
     return TRUE;  
 }
+
+BOOL Joint_set_trq_ref(Joint* o, CTRL_UNITS trq_ref)
+{
+    if (o->control_mode != eomc_controlmode_torque)
+    {
+        return FALSE;
+    }
+    
+    o->trq_ref = trq_ref;
+    
+    return TRUE;
+}
+
+BOOL Joint_set_out_ref(Joint* o, CTRL_UNITS out_ref)
+{
+    if (o->control_mode != eomc_controlmode_openloop)
+    {
+        return FALSE;
+    }
+    
+    o->out_ref = out_ref;
+    
+    return TRUE;
+}
+
+void Joint_stop(Joint* o)
+{
+    Trajectory_stop(&o->trajectory, o->pos_fbk);
+}
+

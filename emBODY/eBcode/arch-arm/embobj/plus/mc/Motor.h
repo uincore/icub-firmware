@@ -19,7 +19,57 @@ typedef struct //CanOdometry2FocMsg
     int32_t position;
 } CanOdometry2FocMsg; 
 
-typedef struct //CanState2FocMsg
+typedef union
+{
+    struct
+    {
+        //B0 L
+        unsigned UnderVoltageFailure    :1;      
+        unsigned OverVoltageFailure     :1;
+        unsigned ExternalFaultAsserted  :1;
+        unsigned OverCurrentFailure     :1;
+        //B0 H
+        unsigned DHESInvalidValue       :1;
+        unsigned AS5045CSumError        :1;
+        unsigned DHESInvalidSequence    :1;
+        unsigned CANInvalidProtocol     :1;
+        //B1 L
+        unsigned CAN_BufferOverRun      :1;
+        unsigned SetpointExpired        :1;
+        unsigned CAN_TXIsPasv           :1;
+        unsigned CAN_RXIsPasv           :1;
+        //B1 H
+        unsigned CAN_IsWarnTX           :1;
+        unsigned CAN_IsWarnRX           :1;
+        unsigned unused                 :1;
+        unsigned OverHeating            :1;
+        //B2 L
+        unsigned ADCCalFailure          :1; 
+        unsigned I2TFailure             :1;                     
+        unsigned EMUROMFault            :1;
+        unsigned EMUROMCRCFault         :1;
+        //B2 H
+        unsigned EncoderFault           :1;
+        unsigned FirmwareSPITimingError :1;		
+        unsigned AS5045CalcError        :1;
+        unsigned FirmwarePWMFatalError  :1;
+        //B3 L
+        unsigned CAN_TXWasPasv          :1;
+        unsigned CAN_RXWasPasv          :1;
+        unsigned CAN_RTRFlagActive      :1;
+        unsigned CAN_WasWarn            :1;
+        //B3 H
+        unsigned CAN_DLCError           :1;
+        unsigned SiliconRevisionFault   :1;
+        unsigned PositionLimitUpper     :1; 
+        unsigned PositionLimitLower     :1; 
+    } bits;
+        
+    uint32_t bitmask;
+        
+} FaultState;
+
+typedef struct //State2FocMsg
 {
     uint8_t control_mode;
     
@@ -40,55 +90,7 @@ typedef struct //CanState2FocMsg
     
     uint16_t pwm_fbk;
     
-    union
-    {
-        struct
-        {
-            //B0 L
-            unsigned UnderVoltageFailure    :1;      
-            unsigned OverVoltageFailure     :1;
-            unsigned ExternalFaultAsserted  :1;
-            unsigned OverCurrentFailure     :1;
-            //B0 H
-            unsigned DHESInvalidValue       :1;
-            unsigned AS5045CSumError        :1;
-            unsigned DHESInvalidSequence    :1;
-            unsigned CANInvalidProtocol     :1;
-            //B1 L
-            unsigned CAN_BufferOverRun      :1;
-            unsigned SetpointExpired        :1;
-            unsigned CAN_TXIsPasv           :1;
-            unsigned CAN_RXIsPasv           :1;
-            //B1 H
-            unsigned CAN_IsWarnTX           :1;
-            unsigned CAN_IsWarnRX           :1;
-            unsigned unused                 :1;
-            unsigned OverHeating            :1;
-            //B2 L
-            unsigned ADCCalFailure          :1; 
-            unsigned I2TFailure             :1;                     
-            unsigned EMUROMFault            :1;
-            unsigned EMUROMCRCFault         :1;
-            //B2 H
-            unsigned EncoderFault           :1;
-            unsigned FirmwareSPITimingError :1;		
-            unsigned AS5045CalcError        :1;
-            unsigned FirmwarePWMFatalError  :1;
-            //B3 L
-            unsigned CAN_TXWasPasv          :1;
-            unsigned CAN_RXWasPasv          :1;
-            unsigned CAN_RTRFlagActive      :1;
-            unsigned CAN_WasWarn            :1;
-            //B3 H
-            unsigned CAN_DLCError           :1;
-            unsigned SiliconRevisionFault   :1;
-            unsigned PositionLimitUpper     :1; 
-            unsigned PositionLimitLower     :1; 
-        } bits;
-        
-        uint32_t bitmask;
-        
-    } fault_state;
+    FaultState fault_state;
     
 } State2FocMsg;
 
@@ -154,7 +156,7 @@ typedef struct //Motor
     
     BOOL not_calibrated;
     
-    uint32_t fault_state_mask;
+    FaultState fault_state;
     uint8_t  qe_state_mask;
     icubCanProto_controlmode_t  control_mode;
     icubCanProto_controlmode_t  control_mode_req;
@@ -206,6 +208,12 @@ extern void Motor_get_state(Motor* o, eOmc_motor_status_t* motor_status);
 extern void Motor_update_pos_fbk(Motor* o, int32_t position);
 extern void Motor_update_current_fbk(Motor* o, int16_t current);
 
+
+////////////////////////////////////////////////////////////////////////////
+extern void Motor_config_gearbox_ratio(Motor* o, int32_t gearbox_ratio);
+extern int16_t Motor_config_pwm_limit(Motor* o, int16_t pwm_limit);
+extern void Motor_set_overcurrent_fault(Motor* o);
+////////////////////////////////////////////////////////////////////////////
 /*
 extern void Motor_update_temperature_fbk(Motor* o, int16_t temperature_fbk);
 extern void Motor_update_pos_raw_fbk(Motor* o, int32_t pos_raw_fbk);

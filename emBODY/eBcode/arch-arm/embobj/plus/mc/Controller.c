@@ -14,10 +14,10 @@
 MController* smc = NULL;
 
 static char invert_matrix(float** M, float** I, char n);
-static void Controller_config_motor_set(MController* o);
-static void Controller_config_encoder_set(MController* o);
+static void MController_config_motor_set(MController* o);
+static void MController_config_encoder_set(MController* o);
 
-MController* Controller_new(uint8_t nJoints) //
+MController* MController_new(uint8_t nJoints) //
 {
     if (!smc) smc = NEW(MController, 1);
     
@@ -79,12 +79,12 @@ MController* Controller_new(uint8_t nJoints) //
         );
     }
     
-    Controller_init();
+    MController_init();
         
     return o;
 }
 
-void Controller_init() //
+void MController_init() //
 {
     MController *o = smc;
     
@@ -113,7 +113,7 @@ void Controller_init() //
     }
 }
 
-void Controller_config_board(uint8_t part_type, uint8_t actuation_type)
+void MController_config_board(uint8_t part_type, uint8_t actuation_type)
 {
     MController *o = smc;
     
@@ -121,7 +121,7 @@ void Controller_config_board(uint8_t part_type, uint8_t actuation_type)
     o->actuation_type = actuation_type;
 }
 
-void Controller_config_joint(int j, eOmc_joint_config_t* config) //
+void MController_config_joint(int j, eOmc_joint_config_t* config) //
 {
     MController *o = smc;
     
@@ -145,22 +145,22 @@ void Controller_config_joint(int j, eOmc_joint_config_t* config) //
     }
 }
 
-void Controller_config_motor(int m, uint8_t hardware_type, uint8_t motor_control_type, eOmc_motor_config_t* config) //
+void MController_config_motor(int m, uint8_t hardware_type, uint8_t motor_control_type, eOmc_motor_config_t* config) //
 {
     Motor_config(smc->motor+m, m, hardware_type, motor_control_type, config);
 }
 
-void Controller_config_motor_friction(int m, eOmc_motor_params_t* friction) //
+void MController_config_motor_friction(int m, eOmc_motor_params_t* friction) //
 {
     Motor_config_friction(smc->motor+m, friction->bemf_value, friction->ktau_value);
 }
 
-void Controller_config_joint_impedance(int j, eOmc_impedance_t* impedance) //
+void MController_config_joint_impedance(int j, eOmc_impedance_t* impedance) //
 {
     Joint_set_impedance(smc->joint+j, impedance);
 }
 
-void Controller_config_absEncoder(uint8_t j, int32_t resolution, int16_t spike_limit) //
+void MController_config_absEncoder(uint8_t j, int32_t resolution, int16_t spike_limit) //
 {
     MController *o = smc;
     
@@ -169,7 +169,7 @@ void Controller_config_absEncoder(uint8_t j, int32_t resolution, int16_t spike_l
     AbsEncoder_config(o->absEncoder[j], j, resolution, spike_limit);
 }
 
-void Controller_config_Jjm(float **Jjm) //
+void MController_config_Jjm(float **Jjm) //
 {
     MController *o = smc;
     
@@ -236,11 +236,11 @@ void Controller_config_Jjm(float **Jjm) //
         }
     }
     
-    Controller_config_motor_set(o);
-    Controller_config_encoder_set(o);
+    MController_config_motor_set(o);
+    MController_config_encoder_set(o);
 }
 
-void Controller_config_Jje(float **Jje) //
+void MController_config_Jje(float **Jje) //
 {
     MController *o = smc;
     
@@ -303,41 +303,41 @@ void Controller_config_Jje(float **Jje) //
         }
     }
 
-    Controller_config_motor_set(o);
-    Controller_config_encoder_set(o);
+    MController_config_motor_set(o);
+    MController_config_encoder_set(o);
 }
 
-void Controller_update_joint_torque_fbk(uint8_t j, CTRL_UNITS trq_fbk) //
+void MController_update_joint_torque_fbk(uint8_t j, CTRL_UNITS trq_fbk) //
 {
     Joint_update_torque_fbk(smc->joint+j, trq_fbk);
 }
 
-void Controller_update_absEncoder_fbk(uint8_t e, int32_t position) //
+void MController_update_absEncoder_fbk(uint8_t e, int32_t position) //
 {
     AbsEncoder_update(smc->absEncoder[e], position);
 }
 
-void Controller_update_motor_state_fbk(uint8_t m, void* state)
+void MController_update_motor_state_fbk(uint8_t m, void* state)
 {
     Motor_update_state_fbk(smc->motor+m, state);
 }
 
-void Controller_invalid_absEncoder_fbk(uint8_t e, uint8_t error_flags) //
+void MController_invalid_absEncoder_fbk(uint8_t e, uint8_t error_flags) //
 {
     AbsEncoder_invalid(smc->absEncoder[e], error_flags);
 }
 
-void Controller_timeout_absEncoder_fbk(uint8_t e) //
+void MController_timeout_absEncoder_fbk(uint8_t e) //
 {
     AbsEncoder_timeout(smc->absEncoder[e]);
 }
 
-int32_t Controller_get_absEncoder(uint8_t j)
+int32_t MController_get_absEncoder(uint8_t j)
 {
     return smc->absEncoder[j]->distance;
 }
 
-void Controller_do()
+void MController_do()
 {
     for (int s=0; s<smc->nSets; ++s)
     {
@@ -345,21 +345,26 @@ void Controller_do()
     }
 }
 
-BOOL Controller_set_control_mode(uint8_t j, eOmc_controlmode_command_t control_mode) //
+BOOL MController_set_control_mode(uint8_t j, eOmc_controlmode_command_t control_mode) //
 {
     return JointSet_set_control_mode(smc->jointSet+smc->j2s[j], control_mode);
 }    
 
-void Controller_set_interaction_mode(uint8_t j, eOmc_interactionmode_t interaction_mode) //
+void MController_set_interaction_mode(uint8_t j, eOmc_interactionmode_t interaction_mode) //
 {
     JointSet_set_interaction_mode(smc->jointSet+smc->j2s[j], interaction_mode);
 } 
+
+void MController_calibrate_encoder(uint8_t e, eOmc_calibrator_t *calibrator)
+{
+    // TODOALE
+}
 
 // --------------------------------------------------------------------------------------------------------------------
 // - definition of static functions 
 // --------------------------------------------------------------------------------------------------------------------
 
-static void Controller_config_motor_set(MController *o)
+static void MController_config_motor_set(MController *o)
 {
     int N = o->nJoints;
     
@@ -393,7 +398,7 @@ static void Controller_config_motor_set(MController *o)
     }
 }
 
-static void Controller_config_encoder_set(MController *o)
+static void MController_config_encoder_set(MController *o)
 {
     int N = o->nJoints;
     
@@ -532,12 +537,12 @@ typedef struct                  // size is 1+3+4*4 = 20
 typedef eOmc_calibrator32_t eOmc_calibrator_t;
 #endif
 
-void Controller_calibrate(uint8_t e, eOmc_calibrator_t *calibrator)
+void MController_calibrate(uint8_t e, eOmc_calibrator_t *calibrator)
 {
     JointSet_calibrate(smc->jointSet+smc->e2s[e], e, calibrator);
 }
 
-void Controller_go_idle(void)
+void MController_go_idle(void)
 {
     for (uint8_t s=0; s<smc->nSets; ++s)
     {
@@ -548,24 +553,24 @@ void Controller_go_idle(void)
 ////////////////////////////////////////////////////////////////////////////////
 
 /*
-void Controller_get_motor_control_state(uint8_t m, uint8_t* control_state, uint8_t* control_state_req)
+void MController_get_motor_control_state(uint8_t m, uint8_t* control_state, uint8_t* control_state_req)
 {
     Motor_get_control_state(smc->motor+m, control_state, control_state_req);
 }
 */
 
-uint32_t Controller_get_motor_fault_mask(uint8_t m)
+uint32_t MController_get_motor_fault_mask(uint8_t m)
 {
     return Motor_get_fault_mask(smc->motor+m);
 }
 
-void Controller_get_joint_state(int j, eOmc_joint_status_t* joint_state)
+void MController_get_joint_state(int j, eOmc_joint_status_t* joint_state)
 {
     Joint_get_state(smc->joint+j, joint_state);
 }
 
 
-void Controller_get_pid_state(int j, eOmc_joint_status_ofpid_t* pid_state, BOOL decoupled_pwm)
+void MController_get_pid_state(int j, eOmc_joint_status_ofpid_t* pid_state, BOOL decoupled_pwm)
 {    
     if (Joint_get_pid_state(smc->joint+j, pid_state))
     {
@@ -578,54 +583,91 @@ void Controller_get_pid_state(int j, eOmc_joint_status_ofpid_t* pid_state, BOOL 
     }
 }
 
-void Controller_get_motor_state(int m, eOmc_motor_status_t* motor_status)
+void MController_get_motor_state(int m, eOmc_motor_status_t* motor_status)
 {
     Motor_get_state(smc->motor+m, motor_status);
 }
 
-void Controller_update_motor_pos_fbk(int m, int32_t position)
+void MController_update_motor_pos_fbk(int m, int32_t position)
 {
     Motor_update_pos_fbk(smc->motor+m, position);
 }
 
-void Controller_update_motor_current_fbk(int m, int16_t current)
+void MController_update_motor_current_fbk(int m, int16_t current)
 {
     Motor_update_current_fbk(smc->motor+m, current);
 }
 
-void Controller_config_pos_pid(int j, eOmc_PID_t *pid_conf)
+void MController_config_pos_pid(int j, eOmc_PID_t *pid_conf)
 {
     PID_config(&smc->joint[j].posPID, pid_conf);
 }
 
-void Controller_config_trq_pid(int m, eOmc_PID_t *pid_conf)
+void MController_config_trq_pid(int m, eOmc_PID_t *pid_conf)
 {
     PID_config(&smc->motor[m].trqPID, pid_conf);
 }
 
-void Controller_config_joint_pos_limits(int j, int32_t pos_min, int32_t pos_max)
+void MController_config_joint_pos_limits(int j, int32_t pos_min, int32_t pos_max)
 {
     Joint_set_limits(smc->joint+j, pos_min, pos_max);
 }
 
-void Controller_config_joint_vel_ref_timeout(int j, int32_t timeout_ms)
+void MController_config_joint_vel_ref_timeout(int j, int32_t timeout_ms)
 {
     WatchDog_set_base_time_msec(&smc->joint[j].vel_ref_wdog, timeout_ms);
 }
 
-BOOL Controller_set_joint_pos_ref(int j, CTRL_UNITS pos_ref, CTRL_UNITS vel_ref)
+BOOL MController_set_joint_pos_ref(int j, CTRL_UNITS pos_ref, CTRL_UNITS vel_ref)
 {
     return Joint_set_pos_ref(smc->joint+j, pos_ref, vel_ref);
 }
 
-BOOL Controller_set_joint_vel_ref(int j, CTRL_UNITS vel_ref, CTRL_UNITS acc_ref)
+BOOL MController_set_joint_vel_ref(int j, CTRL_UNITS vel_ref, CTRL_UNITS acc_ref)
 {
     return Joint_set_vel_ref(smc->joint+j, vel_ref, acc_ref);
 }
 
-BOOL Controller_set_joint_pos_raw(int j, CTRL_UNITS pos_ref)
+BOOL MController_set_joint_pos_raw(int j, CTRL_UNITS pos_ref)
 {
     return Joint_set_pos_raw(smc->joint+j, pos_ref);
+}
+
+BOOL MController_set_joint_trq_ref(int j, CTRL_UNITS trq_ref)
+{
+    return Joint_set_trq_ref(smc->joint+j, trq_ref);
+}
+
+BOOL MController_set_joint_out_ref(int j, CTRL_UNITS out_ref)
+{
+    return Joint_set_out_ref(smc->joint+j, out_ref);
+}
+
+void MController_stop_joint(int j)
+{
+    Joint_stop(smc->joint+j);
+}
+
+void MController_config_motor_gearbox_ratio(int m, int32_t gearbox_ratio)
+{
+    Motor_config_gearbox_ratio(smc->motor+m, gearbox_ratio);
+}
+
+void empty_fake_MController_config_motor_encoder(int m, int32_t resolution){}
+    
+int16_t MController_config_motor_pwm_limit(int m, int16_t pwm_limit)
+{
+    return Motor_config_pwm_limit(smc->motor+m, pwm_limit);
+}
+
+void MController_update_motor_odometry_fbk_can(int m, void* data)
+{
+    Motor_update_odometry_fbk_can(smc->motor+m, data);
+}
+
+void MController_set_motor_overcurrent_fault(int m)
+{
+    Motor_set_overcurrent_fault(smc->motor+m);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

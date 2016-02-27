@@ -48,7 +48,7 @@ void JointSet_init(JointSet* o) //
     o->trq_control_active = FALSE; 
     o->can_do_trq_ctrl = TRUE;
     
-    BOOL is_calibrated = FALSE;
+    //BOOL is_calibrated = FALSE;
 }
 
 void JointSet_config //
@@ -264,8 +264,6 @@ BOOL JointSet_set_control_mode(JointSet* o, eOmc_controlmode_command_t control_m
                 
                 Motor_clear_faults(o->motor+o->motors_of_set[k]);
                 
-                Motor_force_idle(o->motor+o->motors_of_set[k]);
-                
                 Joint_set_control_mode(o->joint+o->joints_of_set[k], eomc_controlmode_cmd_force_idle);
             }
         }
@@ -284,8 +282,6 @@ BOOL JointSet_set_control_mode(JointSet* o, eOmc_controlmode_command_t control_m
             Motor_set_idle(o->motor+o->motors_of_set[k]);
             
             Motor_motion_reset(o->motor+o->motors_of_set[k]);
-            Motor_motion_reset(o->motor+o->motors_of_set[k]);
-            Joint_motion_reset(o->joint+o->joints_of_set[k]);
             Joint_motion_reset(o->joint+o->joints_of_set[k]);
         }
         break;
@@ -296,8 +292,6 @@ BOOL JointSet_set_control_mode(JointSet* o, eOmc_controlmode_command_t control_m
             Motor_set_run(o->motor+o->motors_of_set[k]);
             
             Motor_motion_reset(o->motor+o->motors_of_set[k]);
-            Motor_motion_reset(o->motor+o->motors_of_set[k]);
-            Joint_motion_reset(o->joint+o->joints_of_set[k]);
             Joint_motion_reset(o->joint+o->joints_of_set[k]);
         }
         break;
@@ -307,8 +301,10 @@ BOOL JointSet_set_control_mode(JointSet* o, eOmc_controlmode_command_t control_m
         { 
             Motor_set_run(o->motor+o->motors_of_set[k]);
             
-            Motor_trq_ctrl_turn_on(o->motor+o->motors_of_set[k]);
-            Joint_trq_ctrl_turn_on(o->joint+o->joints_of_set[k]);
+            Motor_motion_reset(o->motor+o->motors_of_set[k]);
+            Joint_motion_reset(o->joint+o->joints_of_set[k]);
+            //Motor_trq_ctrl_turn_on(o->motor+o->motors_of_set[k]);
+            //Joint_trq_ctrl_turn_on(o->joint+o->joints_of_set[k]);
         }    
         break;
     

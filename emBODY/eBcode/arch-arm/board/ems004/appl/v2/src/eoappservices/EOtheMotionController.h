@@ -126,8 +126,9 @@ extern int16_t eo_motioncontrol_extra_GetSuppliedVoltage(EOtheMotionController *
 // others, one make by marco.accame which groups actions
 
 // why dont we put it inside _Tick() ????
+#ifdef INCLUDE_NEVER_REFERENCED
 extern eOresult_t eo_motioncontrol_extra_ManageEXTfault(EOtheMotionController *p);
-
+#endif
 
 
 

@@ -231,7 +231,7 @@ extern void eo_currents_watchdog_TickSupplyVoltage(EOCurrentsWatchdog* p)
 static void s_eo_currents_watchdog_UpdateMotorCurrents(uint8_t motor, int16_t value)
 {
     //eo_emsController_AcquireMotorCurrent(motor, value);
-    Controller_update_motor_current_fbk(motor, value);
+    MController_update_motor_current_fbk(motor, value);
 }
 
 static void s_eo_currents_watchdog_CheckSpike(uint8_t motor, int16_t value)
@@ -246,6 +246,7 @@ static void s_eo_currents_watchdog_CheckSpike(uint8_t motor, int16_t value)
     {
         //signal the OVERCURRENT error EOemsController
         
+        /*
         uint32_t current_state = eo_motioncontrol_extra_GetMotorFaultMask(eo_motioncontrol_GetHandle(),motor);
         
         if((current_state & MOTOR_OVERCURRENT_FAULT) == 0) //overcurrent fault bit not set
@@ -254,8 +255,11 @@ static void s_eo_currents_watchdog_CheckSpike(uint8_t motor, int16_t value)
             uint64_t fault_mask = (((uint64_t)(current_state | MOTOR_OVERCURRENT_FAULT)) << 32) & 0xFFFFFFFF00000000; //adding the error to the current state
             fault_mask |= icubCanProto_controlmode_hwFault; //setting the hard fault of the motor
             //eo_motor_set_motor_status( eo_motors_GetHandle(), motor, (uint8_t*)&fault_mask);
-            Controller_update_motor_state_fbk(motor, &fault_mask);
+            MController_update_motor_state_fbk(motor, &fault_mask);
         }
+        */
+        
+        MController_set_motor_overcurrent_fault(motor);
     }
     
     return;
@@ -317,7 +321,7 @@ static void s_eo_currents_watchdog_CheckI2T(uint8_t motor, int16_t value)
             uint64_t fault_mask = (((uint64_t)(current_state | MOTOR_I2T_LIMIT_FAULT)) << 32) & 0xFFFFFFFF00000000; //adding the error to the current state
             fault_mask |= icubCanProto_controlmode_hwFault; //setting the hard fault of the motor
             //eo_motor_set_motor_status( eo_motors_GetHandle(), motor, (uint8_t*)&fault_mask);
-            Controller_update_motor_state_fbk(motor, &fault_mask);
+            MController_update_motor_state_fbk(motor, &fault_mask);
         }
     }
     

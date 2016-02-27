@@ -109,5 +109,7 @@ extern BOOL Joint_get_pid_state(Joint* o, eOmc_joint_status_ofpid_t* pid_state);
 extern BOOL Joint_set_pos_ref(Joint* o, CTRL_UNITS pos_ref, CTRL_UNITS vel_ref);
 extern BOOL Joint_set_vel_ref(Joint* o, CTRL_UNITS vel_ref, CTRL_UNITS acc_ref);
 extern BOOL Joint_set_pos_raw(Joint* o, CTRL_UNITS pos_ref);
-
+extern BOOL Joint_set_trq_ref(Joint* o, CTRL_UNITS trq_ref);
+extern BOOL Joint_set_out_ref(Joint* o, CTRL_UNITS out_ref);
+extern void Joint_stop(Joint* o);
 #endif

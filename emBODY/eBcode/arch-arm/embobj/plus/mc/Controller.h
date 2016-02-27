@@ -41,30 +41,30 @@ typedef struct //MController
     AbsEncoder **absEncoder;
 } MController;
 
-extern MController* Controller_new(uint8_t nJoints); //
+extern MController* MController_new(uint8_t nJoints); //
 
-extern void Controller_init(void); //
+extern void MController_init(void); //
 
-extern void Controller_config_board(uint8_t board_type, uint8_t actuation_type);
+extern void MController_config_board(uint8_t board_type, uint8_t actuation_type);
 
-extern void Controller_config_joint(int j, eOmc_joint_config_t* config); //
-extern void Controller_config_motor(int m, uint8_t hardware_type, uint8_t motor_control_type, eOmc_motor_config_t* config); //
-extern void Controller_config_absEncoder(uint8_t j, int32_t resolution, int16_t spike_limit); //
-extern void Controller_config_Jjm(float **Jjm); //
-extern void Controller_config_Jje(float **Jje); //
+extern void MController_config_joint(int j, eOmc_joint_config_t* config); //
+extern void MController_config_motor(int m, uint8_t hardware_type, uint8_t motor_control_type, eOmc_motor_config_t* config); //
+extern void MController_config_absEncoder(uint8_t j, int32_t resolution, int16_t spike_limit); //
+extern void MController_config_Jjm(float **Jjm); //
+extern void MController_config_Jje(float **Jje); //
 
-extern void Controller_update_motor_state_fbk(uint8_t m, void* state);
-extern void Controller_update_joint_torque_fbk(uint8_t j, CTRL_UNITS trq_fbk); //
-extern void Controller_update_absEncoder_fbk(uint8_t e, int32_t position); //
-extern void Controller_invalid_absEncoder_fbk(uint8_t e, uint8_t error_flags);
-extern void Controller_timeout_absEncoder_fbk(uint8_t e);
+extern void MController_update_motor_state_fbk(uint8_t m, void* state);
+extern void MController_update_joint_torque_fbk(uint8_t j, CTRL_UNITS trq_fbk); //
+extern void MController_update_absEncoder_fbk(uint8_t e, int32_t position); //
+extern void MController_invalid_absEncoder_fbk(uint8_t e, uint8_t error_flags);
+extern void MController_timeout_absEncoder_fbk(uint8_t e);
 
-extern int32_t Controller_get_absEncoder(uint8_t j); //
+extern int32_t MController_get_absEncoder(uint8_t j); //
 
-extern void Controller_do(void); //
+extern void MController_do(void); //
 
-extern BOOL Controller_set_control_mode(uint8_t j, eOmc_controlmode_command_t control_mode);
-extern void Controller_set_interaction_mode(uint8_t j, eOmc_interactionmode_t interaction_mode);
+extern BOOL MController_set_control_mode(uint8_t j, eOmc_controlmode_command_t control_mode);
+extern void MController_set_interaction_mode(uint8_t j, eOmc_interactionmode_t interaction_mode);
 
 #if 0
 /** @typedef    typedef struct eOmc_calibrator32_t
@@ -92,27 +92,35 @@ typedef struct                  // size is 1+3+4*4 = 20
 typedef eOmc_calibrator32_t eOmc_calibrator_t;
 #endif
 
-extern void Controller_calibrate_encoder(uint8_t e, eOmc_calibrator_t *calibrator);
+extern void MController_calibrate_encoder(uint8_t e, eOmc_calibrator_t *calibrator);
 
-extern void Controller_go_idle(void);
+extern void MController_go_idle(void);
 
 ////////////////////////////////////////////////////////////////////////
-//extern void Controller_get_motor_control_state(uint8_t m, uint8_t* control_state, uint8_t* control_state_req);
-extern uint32_t Controller_get_motor_fault_mask(uint8_t m);
-extern void Controller_get_joint_state(int j, eOmc_joint_status_t* joint_state);
-extern void Controller_get_pid_state(int j, eOmc_joint_status_ofpid_t* pid_state, BOOL decoupled_pwm);
-extern void Controller_get_motor_state(int m, eOmc_motor_status_t* motor_status);
-extern void Controller_update_motor_pos_fbk(int m, int32_t position);
-extern void Controller_update_motor_current_fbk(int m, int16_t current);
-extern void Controller_config_motor_friction(int m, eOmc_motor_params_t* friction); //
-extern void Controller_config_joint_impedance(int j, eOmc_impedance_t* impedance); //
-extern void Controller_config_pos_pid(int j, eOmc_PID_t *pid_conf); //
-extern void Controller_config_trq_pid(int m, eOmc_PID_t *pid_conf); //
-extern void Controller_config_joint_pos_limits(int j, int32_t pos_min, int32_t pos_max);
-extern void Controller_config_joint_vel_ref_timeout(int j, int32_t timeout_ms);
-extern BOOL Controller_set_joint_pos_ref(int j, CTRL_UNITS pos_ref, CTRL_UNITS vel_ref);
-extern BOOL Controller_set_joint_vel_ref(int j, CTRL_UNITS vel_ref, CTRL_UNITS acc_ref);
-extern BOOL Controller_set_joint_pos_raw(int j, CTRL_UNITS pos_ref);
+//extern void MController_get_motor_control_state(uint8_t m, uint8_t* control_state, uint8_t* control_state_req);
+extern uint32_t MController_get_motor_fault_mask(uint8_t m);
+extern void MController_get_joint_state(int j, eOmc_joint_status_t* joint_state);
+extern void MController_get_pid_state(int j, eOmc_joint_status_ofpid_t* pid_state, BOOL decoupled_pwm);
+extern void MController_get_motor_state(int m, eOmc_motor_status_t* motor_status);
+extern void MController_update_motor_pos_fbk(int m, int32_t position);
+extern void MController_update_motor_current_fbk(int m, int16_t current);
+extern void MController_config_motor_friction(int m, eOmc_motor_params_t* friction); //
+extern void MController_config_joint_impedance(int j, eOmc_impedance_t* impedance); //
+extern void MController_config_pos_pid(int j, eOmc_PID_t *pid_conf); //
+extern void MController_config_trq_pid(int m, eOmc_PID_t *pid_conf); //
+extern void MController_config_joint_pos_limits(int j, int32_t pos_min, int32_t pos_max);
+extern void MController_config_joint_vel_ref_timeout(int j, int32_t timeout_ms);
+extern BOOL MController_set_joint_pos_ref(int j, CTRL_UNITS pos_ref, CTRL_UNITS vel_ref);
+extern BOOL MController_set_joint_vel_ref(int j, CTRL_UNITS vel_ref, CTRL_UNITS acc_ref);
+extern BOOL MController_set_joint_pos_raw(int j, CTRL_UNITS pos_ref);
+extern BOOL MController_set_joint_trq_ref(int j, CTRL_UNITS trq_ref);
+extern BOOL MController_set_joint_out_ref(int j, CTRL_UNITS out_ref);
+extern void MController_stop_joint(int j);
+extern void MController_config_motor_gearbox_ratio(int m, int32_t gearbox_ratio);
+extern void empty_fake_MController_config_motor_encoder(int m, int32_t resolution);
+extern int16_t MController_config_motor_pwm_limit(int m, int16_t pwm_limit);
+extern void MController_update_motor_odometry_fbk_can(int m, void* data);
+extern void MController_set_motor_overcurrent_fault(int m);
 ////////////////////////////////////////////////////////////////////////
 
 #endif
