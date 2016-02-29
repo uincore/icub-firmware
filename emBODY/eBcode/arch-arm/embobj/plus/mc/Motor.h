@@ -24,9 +24,9 @@ typedef union
     struct
     {
         //B0 L
+        unsigned ExternalFaultAsserted  :1;
         unsigned UnderVoltageFailure    :1;      
         unsigned OverVoltageFailure     :1;
-        unsigned ExternalFaultAsserted  :1;
         unsigned OverCurrentFailure     :1;
         //B0 H
         unsigned DHESInvalidValue       :1;
@@ -69,28 +69,32 @@ typedef union
         
 } FaultState;
 
+typedef union
+{
+    struct
+    {
+        unsigned dirty           :1;
+        unsigned stuck           :1;
+        unsigned index_broken    :1;
+        unsigned phase_broken    :1;
+        
+        unsigned not_calibrated  :1;
+        unsigned unused          :3;
+    } bits;
+    uint8_t bitmask;
+} QEState;
+
 typedef struct //State2FocMsg
 {
     uint8_t control_mode;
     
-    union
-    {
-        struct
-        {
-            unsigned dirty           :1;
-            unsigned stuck           :1;
-            unsigned index_broken    :1;
-            unsigned phase_broken    :1;
-        
-            unsigned not_calibrated  :1;
-            unsigned unused          :3;
-        } bits;
-        uint8_t bitmask;
-    } qe_state;
+    //QEState qe_state;
+    uint8_t qe_state;
     
     uint16_t pwm_fbk;
     
-    FaultState fault_state;
+    //FaultState fault_state;
+    uint32_t fault_state;
     
 } State2FocMsg;
 
@@ -155,9 +159,11 @@ typedef struct //Motor
     PID trqPID;
     
     BOOL not_calibrated;
+    BOOL hardware_fault;
     
     FaultState fault_state;
-    uint8_t  qe_state_mask;
+    QEState    qe_state;
+    
     icubCanProto_controlmode_t  control_mode;
     icubCanProto_controlmode_t  control_mode_req;
     WatchDog control_mode_req_wdog;
@@ -188,7 +194,6 @@ extern void Motor_force_idle(Motor* o); //
 extern void Motor_motion_reset(Motor *o); //
 extern BOOL Motor_is_calibrated(Motor* o); //
 extern BOOL Motor_check_faults(Motor* o); //
-extern void Motor_clear_faults(Motor* o); //
 
 extern CTRL_UNITS Motor_do_trq_control(Motor* o, CTRL_UNITS trq_ref, CTRL_UNITS trq_fbk); //
 extern void Motor_update_state_fbk(Motor* o, void* state_msg); //
@@ -202,12 +207,19 @@ extern void Motor_set_Iqq_ref(Motor* o, int32_t Iqq_ref);
 extern void Motor_set_vel_ref(Motor* o, int32_t vel_ref);
 //extern void Motor_set_trq_ref(Motor* o, CTRL_UNITS trq_ref);
 
-extern uint32_t Motor_get_fault_mask(Motor* o);
+//extern uint32_t Motor_get_fault_mask(Motor* o);
 extern void Motor_get_pid_state(Motor* o, eOmc_joint_status_ofpid_t* pid_state);
 extern void Motor_get_state(Motor* o, eOmc_motor_status_t* motor_status);
 extern void Motor_update_pos_fbk(Motor* o, int32_t position);
 extern void Motor_update_current_fbk(Motor* o, int16_t current);
 
+extern void Motor_set_overcurrent_fault(Motor* o);
+extern void Motor_set_i2t_fault(Motor* o);
+
+extern void Motor_raise_fault_overcurrent(Motor* o);
+extern void Motor_raise_fault_i2t(Motor* o);
+extern void Motor_raise_fault_external(Motor* o);
+extern BOOL Motor_is_external_fault(Motor* o);
 
 ////////////////////////////////////////////////////////////////////////////
 extern void Motor_config_gearbox_ratio(Motor* o, int32_t gearbox_ratio);

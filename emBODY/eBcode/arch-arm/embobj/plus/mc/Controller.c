@@ -115,10 +115,8 @@ void MController_init() //
 
 void MController_config_board(uint8_t part_type, uint8_t actuation_type)
 {
-    MController *o = smc;
-    
-    o->part_type      = part_type;
-    o->actuation_type = actuation_type;
+    smc->part_type      = part_type;
+    smc->actuation_type = actuation_type;
 }
 
 void MController_config_joint(int j, eOmc_joint_config_t* config) //
@@ -135,7 +133,7 @@ void MController_config_joint(int j, eOmc_joint_config_t* config) //
     {
         case eomc_encoder_AEA:
             o->absEncoder[j] = AbsEncoder_new(1);
-            AbsEncoder_config(o->absEncoder[j], j, config->jntEncoderResolution, AEA_DEFAULT_SPIKE_LIMIT);
+            AbsEncoder_config(o->absEncoder[j], j, config->jntEncoderResolution, AEA_DEFAULT_SPIKE_MAG_LIMIT, AEA_DEFAULT_SPIKE_CNT_LIMIT);
             break;
         
         default:
@@ -158,15 +156,6 @@ void MController_config_motor_friction(int m, eOmc_motor_params_t* friction) //
 void MController_config_joint_impedance(int j, eOmc_impedance_t* impedance) //
 {
     Joint_set_impedance(smc->joint+j, impedance);
-}
-
-void MController_config_absEncoder(uint8_t j, int32_t resolution, int16_t spike_limit) //
-{
-    MController *o = smc;
-    
-    if (!o->absEncoder[j]) o->absEncoder[j] = AbsEncoder_new(1);
-    
-    AbsEncoder_config(o->absEncoder[j], j, resolution, spike_limit);
 }
 
 void MController_config_Jjm(float **Jjm) //
@@ -322,7 +311,7 @@ void MController_update_motor_state_fbk(uint8_t m, void* state)
     Motor_update_state_fbk(smc->motor+m, state);
 }
 
-void MController_invalid_absEncoder_fbk(uint8_t e, uint8_t error_flags) //
+void MController_invalid_absEncoder_fbk(uint8_t e, hal_spiencoder_errors_flags error_flags) //
 {
     AbsEncoder_invalid(smc->absEncoder[e], error_flags);
 }
@@ -552,18 +541,6 @@ void MController_go_idle(void)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-/*
-void MController_get_motor_control_state(uint8_t m, uint8_t* control_state, uint8_t* control_state_req)
-{
-    Motor_get_control_state(smc->motor+m, control_state, control_state_req);
-}
-*/
-
-uint32_t MController_get_motor_fault_mask(uint8_t m)
-{
-    return Motor_get_fault_mask(smc->motor+m);
-}
-
 void MController_get_joint_state(int j, eOmc_joint_status_t* joint_state)
 {
     Joint_get_state(smc->joint+j, joint_state);
@@ -665,9 +642,14 @@ void MController_update_motor_odometry_fbk_can(int m, void* data)
     Motor_update_odometry_fbk_can(smc->motor+m, data);
 }
 
-void MController_set_motor_overcurrent_fault(int m)
+void MController_motor_raise_fault_overcurrent(int m)
 {
-    Motor_set_overcurrent_fault(smc->motor+m);
+    Motor_raise_fault_overcurrent(smc->motor+m);
+}
+
+BOOL MController_motor_is_external_fault(int m)
+{
+    return Motor_is_external_fault(smc->motor+m);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

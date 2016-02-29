@@ -179,7 +179,7 @@ BOOL JointSet_do_check_faults(JointSet* o)
         
         if (Motor_check_faults(o->motor+o->motors_of_set[k])) fault = TRUE;
         
-        if (AbsEncoder_check_faults(o->absEncoder[o->encoders_of_set[k]])) fault = TRUE;
+        if (AbsEncoder_is_in_fault(o->absEncoder[o->encoders_of_set[k]])) fault = TRUE;
     }
     
     if (fault)
@@ -261,8 +261,6 @@ BOOL JointSet_set_control_mode(JointSet* o, eOmc_controlmode_command_t control_m
                 Motor_force_idle(o->motor+o->motors_of_set[k]);
                 
                 AbsEncoder_clear_faults(o->absEncoder[o->encoders_of_set[k]]);
-                
-                Motor_clear_faults(o->motor+o->motors_of_set[k]);
                 
                 Joint_set_control_mode(o->joint+o->joints_of_set[k], eomc_controlmode_cmd_force_idle);
             }

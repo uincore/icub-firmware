@@ -5,6 +5,8 @@
 
 #include "EOEmsControllerCfg.h"
 
+#include "hal_spiencoder.h"
+
 /////////////////////////////////////////////////////////
 // AbsEncoder
 
@@ -21,16 +23,18 @@ typedef struct //AbsEncoder
 
     int16_t delta;
 
-    uint16_t invalid_fault_cnt;
-    uint16_t timeout_fault_cnt;
+    uint16_t invalid_cnt;
+    uint16_t timeout_cnt;
     
-    uint16_t spikes_count;
-
+    int16_t  spike_mag_limit;
+    uint16_t spike_cnt_limit;
+    uint16_t spike_cnt;
+    
+    BOOL hardware_fault;
+    
     int8_t ID;
     int8_t valid_first_data_cnt;
     
-    int16_t spike_limit;
-
     union
     {
         struct
@@ -48,27 +52,29 @@ typedef struct //AbsEncoder
     {
         struct
         {
-            unsigned timeout_fault      :1;
-            unsigned invalid_data_fault :1;
-            unsigned invalid_reading    :1;
-            unsigned parity_error       :1;
-            unsigned spikes             :1;
-            unsigned unused             :3;
+            uint8_t tx_error      :1;
+            uint8_t data_error    :1;
+            uint8_t data_notready :1;
+            uint8_t chip_error    :1;
+            
+            uint8_t spikes        :1;
+            uint8_t unused        :3;
         } fault_bits;
         
         uint8_t fault_mask;
         
     } faults;
+    
 } AbsEncoder;
 
 extern AbsEncoder* AbsEncoder_new(uint8_t n);
 extern void AbsEncoder_init(AbsEncoder* o);
 extern void AbsEncoder_destroy(AbsEncoder* o);
-extern void AbsEncoder_config(AbsEncoder *o, uint8_t ID, int32_t resolution, int16_t spike_limit);
+extern void AbsEncoder_config(AbsEncoder *o, uint8_t ID, int32_t resolution, int16_t spike_mag_limit, uint16_t spike_cnt_limit);
 extern void AbsEncoder_calibrate(AbsEncoder* o, int32_t offset);
 
 extern int32_t AbsEncoder_update(AbsEncoder* o, int16_t position);
-extern void AbsEncoder_invalid(AbsEncoder* o, uint8_t error_flags);
+extern void AbsEncoder_invalid(AbsEncoder* o, hal_spiencoder_errors_flags error_flags);
 extern void AbsEncoder_timeout(AbsEncoder* o);
 
 extern int32_t AbsEncoder_position(AbsEncoder* o);
@@ -77,7 +83,7 @@ extern void AbsEncoder_posvel(AbsEncoder* o, int32_t* position, int32_t* velocit
 
 extern BOOL AbsEncoder_is_ok(AbsEncoder* o);
 extern BOOL AbsEncoder_is_calibrated(AbsEncoder* o);
-extern BOOL AbsEncoder_check_faults(AbsEncoder* o);
+extern BOOL AbsEncoder_is_in_fault(AbsEncoder* o);
 extern void AbsEncoder_clear_faults(AbsEncoder* o);
 
 #endif

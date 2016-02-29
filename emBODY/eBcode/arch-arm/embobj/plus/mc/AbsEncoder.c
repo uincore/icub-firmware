@@ -30,7 +30,8 @@ void AbsEncoder_init(AbsEncoder* o)
     
     o->ID = 0;
     
-    o->spike_limit = 0;
+    o->spike_cnt_limit = 32767;
+    o->spike_mag_limit = 32767;
     
     o->sign = 0;
     
@@ -48,14 +49,15 @@ void AbsEncoder_init(AbsEncoder* o)
 
     o->delta = 0;
 
-    o->invalid_fault_cnt = 0;
-    o->timeout_fault_cnt = 0;
+    o->hardware_fault = FALSE;
+    o->invalid_cnt = 0;
+    o->timeout_cnt = 0;
     
-    o->spikes_count = 0;
-    
-    o->valid_first_data_cnt = 0;
+    o->spike_cnt = 0;
     
     o->faults.fault_mask = FALSE;
+    
+    o->valid_first_data_cnt = 0;
     
     o->state.bits.not_configured  = TRUE;
     o->state.bits.not_calibrated  = TRUE;
@@ -67,13 +69,14 @@ void AbsEncoder_destroy(AbsEncoder* o)
     DELETE(o);
 }
 
-void AbsEncoder_config(AbsEncoder* o, uint8_t ID, int32_t resolution, int16_t spike_limit)
+void AbsEncoder_config(AbsEncoder* o, uint8_t ID, int32_t resolution, int16_t spike_mag_limit, uint16_t spike_cnt_limit)
 {
     o->ID = ID;
     
-    o->spike_limit = spike_limit;//7*(65536L/resolution);
+    o->spike_mag_limit = spike_mag_limit;//7*(65536L/resolution);
+    o->spike_cnt_limit = spike_cnt_limit;//7*(65536L/resolution);
     
-    o->sign = resolution > 0 ? 1 : -1;
+    o->sign = resolution >= 0 ? 1 : -1;
     
     o->state.bits.not_configured = FALSE;    
 }
@@ -100,8 +103,6 @@ void AbsEncoder_posvel(AbsEncoder* o, int32_t* position, int32_t* velocity)
     *position = o->sign*o->distance;
     *velocity = o->sign*o->velocity;
 }
-
-
 
 static void AbsEncoder_position_init(AbsEncoder* o, int16_t position)
 {
@@ -144,19 +145,21 @@ void AbsEncoder_timeout(AbsEncoder* o)
     
     if (o->state.bits.not_calibrated) return;
     
-    if (o->timeout_fault_cnt > ENCODER_TIMEOUT_COUNTER)
+    if (o->timeout_cnt > ENCODER_TIMEOUT_LIMIT)
     {
-        o->faults.fault_bits.timeout_fault = TRUE;
+        o->hardware_fault = TRUE;
     }
     else
     {
-        ++o->timeout_fault_cnt;
+        ++o->timeout_cnt;
     }
+    
+    o->faults.fault_bits.data_notready = TRUE;
     
     o->valid_first_data_cnt = 0;
 }
 
-void AbsEncoder_invalid(AbsEncoder* o, uint8_t error_flags)
+void AbsEncoder_invalid(AbsEncoder* o, hal_spiencoder_errors_flags error_flags)
 {
     if (!o) return;
     
@@ -164,15 +167,20 @@ void AbsEncoder_invalid(AbsEncoder* o, uint8_t error_flags)
     
     if (o->state.bits.not_calibrated) return;
 
-    if (o->invalid_fault_cnt > ENCODER_INVALID_COUNTER)
+    if (o->invalid_cnt > ENCODER_INVALID_LIMIT)
     {
-        o->faults.fault_bits.invalid_data_fault = TRUE;
+        o->hardware_fault = TRUE;
     }
     else
     {
-        ++o->invalid_fault_cnt;
+        ++o->invalid_cnt;
     }
     
+    if (error_flags.data_error)    o->faults.fault_bits.data_error = TRUE;
+    if (error_flags.tx_error)      o->faults.fault_bits.tx_error   = TRUE;
+    if (error_flags.chip_error)    o->faults.fault_bits.chip_error = TRUE;
+    if (error_flags.data_notready) o->faults.fault_bits.chip_error = TRUE;
+        
     o->valid_first_data_cnt = 0;
 }
 
@@ -186,8 +194,8 @@ int32_t AbsEncoder_update(AbsEncoder* o, int16_t position)
     
     position -= o->offset;
         
-    o->invalid_fault_cnt = 0;
-    o->timeout_fault_cnt = 0;
+    o->invalid_cnt = 0;
+    o->timeout_cnt = 0;
     
     if (o->state.bits.not_initialized)
     {
@@ -202,7 +210,7 @@ int32_t AbsEncoder_update(AbsEncoder* o, int16_t position)
         
     o->position_last = position;
 
-    if (-o->spike_limit <= check && check <= o->spike_limit)
+    if (-o->spike_mag_limit <= check && check <= o->spike_mag_limit)
     {
         int16_t delta = position - o->position_sure;
             
@@ -223,7 +231,7 @@ int32_t AbsEncoder_update(AbsEncoder* o, int16_t position)
     }
     else
     {
-        o->spikes_count++;
+        o->spike_cnt++;
        
         o->velocity = (7*o->velocity) >> 3;
     }
@@ -234,18 +242,24 @@ int32_t AbsEncoder_update(AbsEncoder* o, int16_t position)
     
     if ((runner_info->numberofperiods % 1000) == 0)
     {
-        if (o->spikes_count > 0)
+        if (o->spike_cnt > 0)
         {                
             //message "spike encoder error"
             eOerrmanDescriptor_t descriptor = {0};
             descriptor.par16 = o->ID;           
-            descriptor.par64 = o->spikes_count;
+            descriptor.par64 = o->spike_cnt;
             descriptor.sourcedevice = eo_errman_sourcedevice_localboard;
             descriptor.sourceaddress = 0;
             descriptor.code = eoerror_code_get(eoerror_category_MotionControl, eoerror_value_MC_aea_abs_enc_spikes);
             eo_errman_Error(eo_errman_GetHandle(), eo_errortype_warning, NULL, NULL, &descriptor);
                 
-            o->spikes_count = 0;
+            if (o->spike_cnt > o->spike_cnt_limit)
+            {
+                o->faults.fault_bits.spikes = TRUE;
+                o->hardware_fault = TRUE;
+            }
+            
+            o->spike_cnt = 0;
         }
     }
     
@@ -254,27 +268,30 @@ int32_t AbsEncoder_update(AbsEncoder* o, int16_t position)
 
 BOOL AbsEncoder_is_ok(AbsEncoder* o)
 {
-    return (!o->state.not_ready) && (!o->faults.fault_mask);
+    return (!o->state.not_ready) && (!o->hardware_fault);
 }
-
 
 BOOL AbsEncoder_is_calibrated(AbsEncoder* o)
 {    
     return !o->state.bits.not_calibrated;
 }
 
-BOOL AbsEncoder_check_faults(AbsEncoder* o)
-{
-    if (!o) return FALSE;
-        
-    return o->faults.fault_mask != 0;
+BOOL AbsEncoder_is_in_fault(AbsEncoder* o)
+{      
+    return o->hardware_fault;
 }
 
 void AbsEncoder_clear_faults(AbsEncoder* o)
 {
-    o->faults.fault_mask = 0;
+    o->hardware_fault = FALSE;
+    
+    o->faults.fault_mask = FALSE;
+    
+    o->invalid_cnt = 0;
+    o->timeout_cnt = 0;
+    
+    o->spike_cnt = 0;
 }
-
 
 // AbsEncoder
 /////////////////////////////////////////////////////////

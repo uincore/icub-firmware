@@ -49,14 +49,13 @@ extern void MController_config_board(uint8_t board_type, uint8_t actuation_type)
 
 extern void MController_config_joint(int j, eOmc_joint_config_t* config); //
 extern void MController_config_motor(int m, uint8_t hardware_type, uint8_t motor_control_type, eOmc_motor_config_t* config); //
-extern void MController_config_absEncoder(uint8_t j, int32_t resolution, int16_t spike_limit); //
 extern void MController_config_Jjm(float **Jjm); //
 extern void MController_config_Jje(float **Jje); //
 
 extern void MController_update_motor_state_fbk(uint8_t m, void* state);
 extern void MController_update_joint_torque_fbk(uint8_t j, CTRL_UNITS trq_fbk); //
 extern void MController_update_absEncoder_fbk(uint8_t e, int32_t position); //
-extern void MController_invalid_absEncoder_fbk(uint8_t e, uint8_t error_flags);
+extern void MController_invalid_absEncoder_fbk(uint8_t e, hal_spiencoder_errors_flags error_flags);
 extern void MController_timeout_absEncoder_fbk(uint8_t e);
 
 extern int32_t MController_get_absEncoder(uint8_t j); //
@@ -98,7 +97,6 @@ extern void MController_go_idle(void);
 
 ////////////////////////////////////////////////////////////////////////
 //extern void MController_get_motor_control_state(uint8_t m, uint8_t* control_state, uint8_t* control_state_req);
-extern uint32_t MController_get_motor_fault_mask(uint8_t m);
 extern void MController_get_joint_state(int j, eOmc_joint_status_t* joint_state);
 extern void MController_get_pid_state(int j, eOmc_joint_status_ofpid_t* pid_state, BOOL decoupled_pwm);
 extern void MController_get_motor_state(int m, eOmc_motor_status_t* motor_status);
@@ -120,7 +118,9 @@ extern void MController_config_motor_gearbox_ratio(int m, int32_t gearbox_ratio)
 extern void empty_fake_MController_config_motor_encoder(int m, int32_t resolution);
 extern int16_t MController_config_motor_pwm_limit(int m, int16_t pwm_limit);
 extern void MController_update_motor_odometry_fbk_can(int m, void* data);
-extern void MController_set_motor_overcurrent_fault(int m);
+
+extern void MController_motor_raise_fault_overcurrent(int m);
+extern BOOL MController_motor_is_external_fault(int m);
 ////////////////////////////////////////////////////////////////////////
 
 #endif

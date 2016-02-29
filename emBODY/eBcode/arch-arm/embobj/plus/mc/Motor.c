@@ -150,14 +150,17 @@ void Motor_config(Motor* o, uint8_t ID, uint8_t HARDWARE_TYPE, uint8_t MOTOR_CON
         
         WatchDog_set_base_time_msec(&o->can_2FOC_alive_wdog, CAN_ALIVE_TIMEOUT);
         WatchDog_rearm(&o->can_2FOC_alive_wdog);
+    
+        WatchDog_set_base_time_msec(&o->control_mode_req_wdog, CTRL_REQ_TIMEOUT);
+        
+        Motor_new_state_req(o, icubCanProto_controlmode_idle);
     }
     else if (o->HARDWARE_TYPE == HARDWARE_MC4p)
     {
         //Motor_config_MC4p(o->ID, config);
-    }
-    
-    WatchDog_set_base_time_msec(&o->control_mode_req_wdog, CTRL_REQ_TIMEOUT);
-    Motor_new_state_req(o, icubCanProto_controlmode_idle);
+        o->control_mode = icubCanProto_controlmode_idle;
+        hal_motor_disable((hal_motor_t)o->ID);
+    }    
 }
 
 void Motor_destroy(Motor* o) //
@@ -210,6 +213,7 @@ void Motor_set_run(Motor* o) //
     if (o->HARDWARE_TYPE == HARDWARE_2FOC)
     {
         Motor_set_control_mode_2FOC(o->ID, control_mode);
+        Motor_new_state_req(o, control_mode);
     }
     else if (o->HARDWARE_TYPE == HARDWARE_MC4p)
     {
@@ -217,8 +221,6 @@ void Motor_set_run(Motor* o) //
         
         o->control_mode = control_mode;
     }
-    
-    Motor_new_state_req(o, control_mode);
 }
 
 void Motor_set_idle(Motor* o) //
@@ -226,15 +228,17 @@ void Motor_set_idle(Motor* o) //
     if (o->HARDWARE_TYPE == HARDWARE_2FOC)
     {
         Motor_set_control_mode_2FOC(o->ID, icubCanProto_controlmode_idle);
+        Motor_new_state_req(o, icubCanProto_controlmode_idle);
     }
     else if (o->HARDWARE_TYPE == HARDWARE_MC4p)
     {
         hal_motor_disable((hal_motor_t)o->ID);
         
-        o->control_mode = icubCanProto_controlmode_idle;
+        if (o->control_mode != icubCanProto_controlmode_hwFault)
+        {
+            o->control_mode = icubCanProto_controlmode_idle;
+        }
     }
-    
-    Motor_new_state_req(o, icubCanProto_controlmode_idle);    
 }
 
 void Motor_force_idle(Motor* o) //
@@ -242,6 +246,8 @@ void Motor_force_idle(Motor* o) //
     if (o->HARDWARE_TYPE == HARDWARE_2FOC)
     {
         Motor_set_control_mode_2FOC(o->ID, icubCanProto_controlmode_forceIdle);
+        Motor_new_state_req(o, icubCanProto_controlmode_idle);
+        WatchDog_rearm(&o->can_2FOC_alive_wdog);
     }
     else if (o->HARDWARE_TYPE == HARDWARE_MC4p)
     {
@@ -250,7 +256,80 @@ void Motor_force_idle(Motor* o) //
         o->control_mode = icubCanProto_controlmode_idle;
     }
     
-    Motor_new_state_req(o, icubCanProto_controlmode_idle);    
+    o->fault_state.bitmask = 0;
+    o->hardware_fault = FALSE;
+}
+
+BOOL Motor_check_faults(Motor* o) //
+{
+    if (o->control_mode == icubCanProto_controlmode_hwFault)
+    {
+        o->hardware_fault = TRUE;
+    }
+    
+    if (o->HARDWARE_TYPE == HARDWARE_2FOC)
+    {
+        if (WatchDog_check_expired(&o->can_2FOC_alive_wdog))
+        {
+            // TODOALE add can dead fault flag
+            o->hardware_fault = TRUE;
+        }
+        
+        if (o->control_mode != o->control_mode_req)
+        {
+            if (o->control_mode != icubCanProto_controlmode_hwFault)
+            {   
+                if ((o->control_mode != icubCanProto_controlmode_idle) || !o->fault_state.bits.ExternalFaultAsserted)
+                {
+                    if (WatchDog_check_expired(&o->control_mode_req_wdog))
+                    {
+                        // TODOALE add wrong control mode fault flag 
+                        o->hardware_fault = TRUE;
+                    }
+                }
+            }
+        }
+    }
+    
+    if (o->HARDWARE_TYPE == HARDWARE_2FOC)
+    {
+        if (o->hardware_fault || hal_motor_externalfaulted())
+        {
+            hal_motor_disable((hal_motor_t)o->ID);
+        }
+    }
+    
+    return o->hardware_fault;
+}
+
+void Motor_raise_fault_overcurrent(Motor* o)
+{
+    hal_motor_disable((hal_motor_t)o->ID);
+    
+    o->fault_state.bits.OverCurrentFailure = TRUE;
+    
+    o->control_mode = icubCanProto_controlmode_hwFault;
+}
+
+void Motor_raise_fault_i2t(Motor* o)
+{
+    hal_motor_disable((hal_motor_t)o->ID);
+    
+    o->fault_state.bits.I2TFailure = TRUE;
+    
+    o->control_mode = icubCanProto_controlmode_hwFault;
+}
+
+void Motor_raise_fault_external(Motor* o)
+{
+    hal_motor_disable((hal_motor_t)o->ID);
+    
+    o->fault_state.bits.ExternalFaultAsserted = TRUE;
+    
+    if (o->control_mode != icubCanProto_controlmode_hwFault)
+    {
+        o->control_mode = icubCanProto_controlmode_idle;
+    }
 }
 
 void Motor_motion_reset(Motor *o) //
@@ -261,39 +340,6 @@ void Motor_motion_reset(Motor *o) //
 BOOL Motor_is_calibrated(Motor* o) //
 {
     return !(o->not_calibrated);
-}
-
-BOOL Motor_check_faults(Motor* o) //
-{
-    BOOL fault = FALSE;
-    
-    if (o->fault_state.bitmask)
-    {
-        fault = TRUE;
-    }
-    
-    if (o->control_mode != o->control_mode_req)
-    {
-        if (WatchDog_check_expired(&o->control_mode_req_wdog))
-        {
-            fault = TRUE;
-        }
-    }
-
-    if (o->HARDWARE_TYPE == HARDWARE_2FOC)
-    {
-        if (WatchDog_check_expired(&o->can_2FOC_alive_wdog))
-        {
-            fault = TRUE;
-        }
-    }
-    
-    return fault;
-}
-
-extern void Motor_clear_faults(Motor* o)
-{
-    o->fault_state.bitmask = 0;
 }
 
 CTRL_UNITS Motor_do_trq_control(Motor* o, CTRL_UNITS trq_ref, CTRL_UNITS trq_fbk) //
@@ -312,11 +358,12 @@ void Motor_update_state_fbk(Motor* o, void* state) //
     
     WatchDog_rearm(&o->can_2FOC_alive_wdog);
    
-    o->fault_state.bitmask = state_msg->fault_state.bitmask;
+    o->fault_state.bitmask = state_msg->fault_state;
+    
     o->control_mode        = (icubCanProto_controlmode_t)state_msg->control_mode; 
     o->pwm_fbk             = state_msg->pwm_fbk;
-    o->qe_state_mask       = state_msg->qe_state.bitmask;
-    o->not_calibrated      = state_msg->qe_state.bits.not_calibrated;
+    o->qe_state.bitmask    = state_msg->qe_state;
+    o->not_calibrated      = o->qe_state.bits.not_calibrated;
 }
 
 void Motor_update_odometry_fbk_can(Motor* o, CanOdometry2FocMsg* can_msg) //
@@ -389,11 +436,12 @@ void Motor_set_trq_ref(Motor* o, CTRL_UNITS trq_ref)
     o->trq_ref = trq_ref; 
 }
 */
-
+/*
 uint32_t Motor_get_fault_mask(Motor* o)
 {
     return o->fault_state.bitmask;
 }
+*/
 
 void Motor_get_pid_state(Motor* o, eOmc_joint_status_ofpid_t* pid_state)
 {
@@ -464,9 +512,18 @@ int16_t Motor_config_pwm_limit(Motor* o, int16_t pwm_limit)
     return pwm_limit;
 }
 
-void Motor_set_overcurrent_fault(Motor* o)
+BOOL Motor_is_external_fault(Motor* o)
 {
-    o->fault_state.bits.OverCurrentFailure = TRUE;
+    if (o->HARDWARE_TYPE == HARDWARE_2FOC)
+    {
+        return o->fault_state.bits.ExternalFaultAsserted;
+    }
+    else if (o->HARDWARE_TYPE == HARDWARE_MC4p)
+    {
+        return hal_motor_externalfaulted();
+    }
+    
+    return FALSE;
 }
 
 /*

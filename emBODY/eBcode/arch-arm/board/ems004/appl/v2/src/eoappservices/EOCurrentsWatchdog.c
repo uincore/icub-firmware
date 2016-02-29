@@ -245,21 +245,8 @@ static void s_eo_currents_watchdog_CheckSpike(uint8_t motor, int16_t value)
     if (value > s_eo_currents_watchdog.themotors[motor]->config.currentLimits.overloadCurrent)
     {
         //signal the OVERCURRENT error EOemsController
-        
-        /*
-        uint32_t current_state = eo_motioncontrol_extra_GetMotorFaultMask(eo_motioncontrol_GetHandle(),motor);
-        
-        if((current_state & MOTOR_OVERCURRENT_FAULT) == 0) //overcurrent fault bit not set
-        {
-            //simulate the CANframe used by 2FOC to signal the status
-            uint64_t fault_mask = (((uint64_t)(current_state | MOTOR_OVERCURRENT_FAULT)) << 32) & 0xFFFFFFFF00000000; //adding the error to the current state
-            fault_mask |= icubCanProto_controlmode_hwFault; //setting the hard fault of the motor
-            //eo_motor_set_motor_status( eo_motors_GetHandle(), motor, (uint8_t*)&fault_mask);
-            MController_update_motor_state_fbk(motor, &fault_mask);
-        }
-        */
-        
-        MController_set_motor_overcurrent_fault(motor);
+                
+        MController_motor_raise_fault_overcurrent(motor);
     }
     
     return;
@@ -312,17 +299,8 @@ static void s_eo_currents_watchdog_CheckI2T(uint8_t motor, int16_t value)
     if( s_eo_currents_watchdog.accomulatorEp[motor] > s_eo_currents_watchdog.I2T_threshold[motor])
     {
         //signal the I2T error to EOemsController
-    
-        uint32_t current_state = eo_motioncontrol_extra_GetMotorFaultMask(eo_motioncontrol_GetHandle(),motor);
-
-        if((current_state & MOTOR_I2T_LIMIT_FAULT) == 0) //I2T fault bit not set
-        {
-            //simulate the CANframe used by 2FOC to signal the status
-            uint64_t fault_mask = (((uint64_t)(current_state | MOTOR_I2T_LIMIT_FAULT)) << 32) & 0xFFFFFFFF00000000; //adding the error to the current state
-            fault_mask |= icubCanProto_controlmode_hwFault; //setting the hard fault of the motor
-            //eo_motor_set_motor_status( eo_motors_GetHandle(), motor, (uint8_t*)&fault_mask);
-            MController_update_motor_state_fbk(motor, &fault_mask);
-        }
+        
+        MController_motor_raise_fault_i2t(motor);
     }
     
     // 3) reset average data
