@@ -2,6 +2,8 @@
 
 #include "EOtheMemoryPool.h"
 
+#include "EOmcController.h"
+
 #include "EOemsControllerCfg.h"
 
 #include "Joint.h"
@@ -14,8 +16,8 @@
 MController* smc = NULL;
 
 static char invert_matrix(float** M, float** I, char n);
-static void MController_config_motor_set(MController* o);
-static void MController_config_encoder_set(MController* o);
+//static void MController_config_motor_set(MController* o);
+//static void MController_config_encoder_set(MController* o);
 
 MController* MController_new(uint8_t nJoints) //
 {
@@ -45,7 +47,9 @@ MController* MController_new(uint8_t nJoints) //
     
     o->Jjm = NEW(float*, nJoints);
     o->Jmj = NEW(float*, nJoints);
-    o->Jje = NEW(float*, nJoints);
+    
+    o->Sjm = NEW(float*, nJoints);
+    o->Sje = NEW(float*, nJoints);
     
     o->absEncoder = NEW(AbsEncoder*, nJoints);
     
@@ -57,7 +61,9 @@ MController* MController_new(uint8_t nJoints) //
         
         o->Jjm[i] = NEW(float, nJoints);
         o->Jmj[i] = NEW(float, nJoints);
-        o->Jje[i] = NEW(float, nJoints);
+        
+        o->Sjm[i] = NEW(float, nJoints);
+        o->Sje[i] = NEW(float, nJoints);
         
         o->absEncoder[i] = NULL;
         
@@ -74,7 +80,8 @@ MController* MController_new(uint8_t nJoints) //
             o->motor, 
             o->Jjm,
             o->Jmj,
-            o->Jje,
+            o->Sje,
+            o->Sjm,
             o->absEncoder
         );
     }
@@ -108,15 +115,199 @@ void MController_init() //
         
         for (int k=0; k<o->nJoints; ++k)
         {
-            o->Jjm[i][k] = o->Jmj[i][k] = o->Jje[i][k] = (i==k?1.0f:0.0f);
+            o->Jjm[i][k] = o->Jmj[i][k] = o->Sje[i][k] = o->Sjm[i][k] = (i==k?1.0f:0.0f);
         }
     }
 }
 
 void MController_config_board(uint8_t part_type, uint8_t actuation_type)
 {
-    smc->part_type      = part_type;
-    smc->actuation_type = actuation_type;
+    MController *o = smc;
+    
+    //o->part_type      = part_type;
+    o->actuation_type = actuation_type;
+    
+    float **Jjm = o->Jjm;
+    float **Jmj = o->Jmj;
+  
+    float **Sjm = o->Sjm;
+    float **Sje = o->Sje;
+    
+    switch (part_type)
+    {
+    case emscontroller_board_ANKLE:                   //= 1,    //2FOC
+        o->nJoints = 2;
+        o->nSets   = 2;
+    
+        //invert_matrix(Jjm, Jmj, 2);
+    
+        o->j2s[0] = 0; o->m2s[0] = 0;
+        o->j2s[1] = 1; o->m2s[1] = 1;
+        
+        for (int k = 0; k<o->nJoints; ++k)
+        {
+            o->joint[k].motor_control_type = PWM_CONTROLLED_MOTOR;
+            o->motor[k].MOTOR_CONTROL_TYPE = PWM_CONTROLLED_MOTOR;
+        }
+        
+        break;
+    case emscontroller_board_UPPERLEG:                //= 2,    //2FOC
+        o->nJoints = 4;
+        o->nSets   = 4;
+    
+        Sjm[0][0] = 50.0f/75.0f;
+        Jjm[0][0] = Sjm[0][0];
+    
+        //invert_matrix(Jjm, Jmj, 4);
+    
+        o->j2s[0] = 0; o->m2s[0] = 0;
+        o->j2s[1] = 1; o->m2s[1] = 1;
+        o->j2s[2] = 2; o->m2s[2] = 2;
+        o->j2s[3] = 3; o->m2s[3] = 3;
+        
+        for (int k = 0; k<o->nJoints; ++k)
+        {
+            o->joint[k].motor_control_type = PWM_CONTROLLED_MOTOR;
+            o->motor[k].MOTOR_CONTROL_TYPE = PWM_CONTROLLED_MOTOR;
+        }
+    
+        break;
+    case emscontroller_board_WAIST:                   //= 3,    //2FOC
+    {    
+        o->nJoints = 3;
+        o->nSets   = 1;
+
+        // |j0|   |   0.5   0.5    0   |   |m0|
+        // |j1| = |  -0.5   0.5    0   | * |m1|
+        // |j2|   | 22/80 22/80  44/80 |   |m2|
+        
+        float alfa = 22.0f/80.0f;
+    
+        Sjm[0][0] =  0.5f; Sjm[0][1] =  0.5f; Sjm[0][2] =  0.0f; 
+        Sjm[1][0] = -0.5f; Sjm[1][1] =  0.5f; Sjm[1][2] =  0.0f; 
+        Sjm[2][0] =  alfa; Sjm[2][1] =  alfa; Sjm[2][2] =  2.0f*alfa;
+    
+        for (int j=0; j<3; ++j)
+            for (int m=0; m<3; ++m)
+                Jjm[j][m] = Sjm[j][m];
+        
+        // beware: the 3rd joint (yaw) is considered independent in position control
+        //invert_matrix(Jjm, Jmj, 3);
+        Jmj[0][0] =  0.5f; Jmj[0][1] = -0.5f;
+        Jmj[1][0] =  0.5f; Jmj[1][1] =  0.5f;
+        
+        o->j2s[0] = 0; o->m2s[0] = 0;
+        o->j2s[1] = 0; o->m2s[1] = 0;
+        o->j2s[2] = 0; o->m2s[2] = 0;
+        
+        for (int k = 0; k<o->nJoints; ++k)
+        {
+            o->joint[k].motor_control_type = PWM_CONTROLLED_MOTOR;
+            o->motor[k].MOTOR_CONTROL_TYPE = PWM_CONTROLLED_MOTOR;
+        }
+        
+        break;
+    }
+    case emscontroller_board_SHOULDER:                //= 4,    //2FOC
+    {
+        o->nJoints = 4;
+        o->nSets   = 2;
+        
+        // |j0|    | 1     0       0   |   |m0|
+        // |j1|  = | 1   40/65     0   | * |m1|
+        // |j2|    | 0  -40/65   40/65 |   |m2|
+
+        float alfa = 40.0f/65.0f;
+    
+        Sjm[0][0] =  1.0f; Sjm[0][1] =  0.0f; Sjm[0][2] =  0.0f; Sjm[0][3] =  0.0f;
+        Sjm[1][0] =  1.0f; Sjm[1][1] =  alfa; Sjm[1][2] =  0.0f; Sjm[1][3] =  0.0f;
+        Sjm[2][0] =  0.0f; Sjm[2][1] = -alfa; Sjm[2][2] =  alfa; Sjm[2][3] =  0.0f;
+        Sjm[3][0] =  0.0f; Sjm[3][1] =  0.0f; Sjm[3][2] =  0.0f; Sjm[3][3] =  1.0f;
+
+        for (int j=0; j<4; ++j)
+            for (int m=0; m<4; ++m)
+                Jjm[j][m] = Sjm[j][m];
+        
+        // beware: the 3rd joint is considered independent in position control
+        //invert_matrix(Jjm, Jmj, 4);
+        Jmj[1][0] = -1.0f/alfa; Jmj[1][1] =  1.0f/alfa;
+        Jmj[2][2] =  1.0f/alfa;
+        
+        #if defined(V1_MECHANICS)
+        // |j0|   |  1     0    0   |   |e0|     
+        // |j1| = |  0     1    0   | * |e1|
+        // |j2|   |  1    -1  40/65 |   |e2|
+        Sje[2][0] = 1.0f; Sje[2][1] = -1.0f; Sje[2][2] = alfa;
+        #endif
+        
+        o->j2s[0] = 0; o->m2s[0] = 0;
+        o->j2s[1] = 0; o->m2s[1] = 0;
+        o->j2s[2] = 0; o->m2s[2] = 0;
+        o->j2s[3] = 1; o->m2s[3] = 1;
+        
+        for (int k = 0; k<o->nJoints; ++k)
+        {
+            o->joint[k].motor_control_type = PWM_CONTROLLED_MOTOR;
+            o->motor[k].MOTOR_CONTROL_TYPE = PWM_CONTROLLED_MOTOR;
+        }
+        
+        break;
+    }
+    case emscontroller_board_CER_WAIST:               //= 15,   //2FOC
+        o->nJoints = 4;
+        o->nSets   = 2;
+
+        o->j2s[0] = 0; o->m2s[0] = 0; // tripod
+        o->j2s[1] = 0; o->m2s[1] = 0; // tripod
+        o->j2s[2] = 0; o->m2s[2] = 0; // tripod
+        o->j2s[3] = 1; o->m2s[3] = 1; // yaw
+        
+        for (int k = 0; k<3; ++k)
+        {
+            o->joint[k].motor_control_type = PWM_CONTROLLED_MOTOR;
+            o->motor[k].MOTOR_CONTROL_TYPE = PWM_CONTROLLED_MOTOR;
+        }
+        
+        o->joint[3].motor_control_type = VEL_CONTROLLED_MOTOR;
+        o->motor[3].MOTOR_CONTROL_TYPE = VEL_CONTROLLED_MOTOR;
+    
+        break;
+	case emscontroller_board_CER_BASE:                //= 21    //2FOC
+    {
+        o->nJoints = 4;
+        o->nSets   = 4;
+        
+        o->j2s[0] = 0; o->m2s[0] = 0;
+        o->j2s[1] = 1; o->m2s[1] = 1;
+        o->j2s[2] = 2; o->m2s[2] = 2;
+        o->j2s[3] = 3; o->m2s[3] = 3;
+        
+        for (int k = 0; k<o->nJoints; ++k)
+        {
+            o->joint[k].motor_control_type = PWM_CONTROLLED_MOTOR;
+            o->motor[k].MOTOR_CONTROL_TYPE = PWM_CONTROLLED_MOTOR;
+        }
+    }
+        break;
+    case emscontroller_board_HEAD_neckpitch_neckroll: //= 5,    //MC4plus
+        break;
+    case emscontroller_board_HEAD_neckyaw_eyes:       //= 6,    //MC4plus
+        break;
+    case emscontroller_board_FACE_eyelids_jaw:        //= 7,    //MC4plus
+        break;
+    case emscontroller_board_FACE_lips:               //= 8,    //MC4plus
+        break;
+    case emscontroller_board_HAND_1:                  //= 9,    //MC4plus
+        break;
+    case emscontroller_board_HAND_2:                  //= 10,   //MC4plus
+        break;
+    case emscontroller_board_FOREARM:                 //= 11,   //MC4plus
+        break;
+    case emscontroller_board_CER_WRIST:               //= 12,   //MC4plus
+        break;
+    default:
+        return;
+    }
 }
 
 void MController_config_joint(int j, eOmc_joint_config_t* config) //
@@ -125,6 +316,7 @@ void MController_config_joint(int j, eOmc_joint_config_t* config) //
     
     Joint_config(o->joint+j, config);
     
+    // TODOALE move to motor config
     Motor_config_trqPID(o->motor+j, &(config->pidtorque));
     Motor_config_filter(o->motor+j, config->tcfiltertype);
     Motor_config_friction(o->motor+j, config->motor_params.bemf_value, config->motor_params.ktau_value);
@@ -158,6 +350,7 @@ void MController_config_joint_impedance(int j, eOmc_impedance_t* impedance) //
     Joint_set_impedance(smc->joint+j, impedance);
 }
 
+/*
 void MController_config_Jjm(float **Jjm) //
 {
     MController *o = smc;
@@ -228,7 +421,8 @@ void MController_config_Jjm(float **Jjm) //
     MController_config_motor_set(o);
     MController_config_encoder_set(o);
 }
-
+*/
+/*
 void MController_config_Jje(float **Jje) //
 {
     MController *o = smc;
@@ -295,6 +489,7 @@ void MController_config_Jje(float **Jje) //
     MController_config_motor_set(o);
     MController_config_encoder_set(o);
 }
+*/
 
 void MController_update_joint_torque_fbk(uint8_t j, CTRL_UNITS trq_fbk) //
 {
@@ -353,6 +548,7 @@ void MController_calibrate_encoder(uint8_t e, eOmc_calibrator_t *calibrator)
 // - definition of static functions 
 // --------------------------------------------------------------------------------------------------------------------
 
+/*
 static void MController_config_motor_set(MController *o)
 {
     int N = o->nJoints;
@@ -386,7 +582,8 @@ static void MController_config_motor_set(MController *o)
         o->mos[s][set_dim[s]++] = m;
     }
 }
-
+*/
+/*
 static void MController_config_encoder_set(MController *o)
 {
     int N = o->nJoints;
@@ -420,6 +617,7 @@ static void MController_config_encoder_set(MController *o)
         o->eos[s][set_dim[s]++] = e;
     }
 }
+*/
 
 #define FOR(i) for (int i=0; i<n; ++i)
 #define SCAN(r,c) FOR(r) FOR(c)

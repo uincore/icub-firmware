@@ -23,7 +23,9 @@ typedef struct // JointSet
 
     float** Jjm;
     float** Jmj;
-    float** Jje;
+    
+    float** Sje;
+    float** Sjm;
     
     AbsEncoder** absEncoder;
  
@@ -54,7 +56,8 @@ extern void JointSet_config //
     Motor* motor,
     float** Jjm,
     float** Jmj,
-    float** Jje,
+    float** Sje,
+    float** Sjm,
     AbsEncoder **absEncoder
 );
 

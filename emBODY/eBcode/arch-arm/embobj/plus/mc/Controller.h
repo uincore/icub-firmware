@@ -33,9 +33,11 @@ typedef struct //MController
     
     float **Jjm;
     float **Jmj;
-    float **Jje;
     
-    uint8_t part_type;
+    float **Sje;
+    float **Sjm;
+    
+    //uint8_t part_type;
     uint8_t actuation_type;
     
     AbsEncoder **absEncoder;

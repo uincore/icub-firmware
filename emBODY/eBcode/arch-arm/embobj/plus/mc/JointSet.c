@@ -35,7 +35,9 @@ void JointSet_init(JointSet* o) //
        
     o->Jjm = NULL;
     o->Jmj = NULL;
-    o->Jje = NULL;
+    
+    o->Sje = NULL;
+    o->Sjm = NULL;
     
     o->absEncoder = NULL;
     
@@ -62,7 +64,8 @@ void JointSet_config //
     Motor* motor, 
     float** Jjm,
     float** Jmj,
-    float** Jje,
+    float** Sje,
+    float** Sjm,
     AbsEncoder **absEncoder
 )
 {
@@ -74,7 +77,8 @@ void JointSet_config //
     o->motor = motor;
     o->Jjm = Jjm;
     o->Jmj = Jmj;
-    o->Jje = Jje;
+    o->Sje = Sje;
+    o->Sjm = Sjm;
     o->absEncoder = absEncoder;
 }
 
@@ -85,7 +89,7 @@ void JointSet_do_odometry(JointSet* o) //
 
     int N = *(o->pN);
             
-    float **Jjm = o->Jjm;
+    float **Sjm = o->Sjm;
     
     for (js=0; js<N; ++js)
     {
@@ -98,12 +102,12 @@ void JointSet_do_odometry(JointSet* o) //
         {
             m = o->motors_of_set[ms];
         
-            o->joint[j].motor_pos_fbk += Jjm[j][m] * o->motor[m].pos_fbk;
-            o->joint[j].motor_vel_fbk += Jjm[j][m] * o->motor[m].vel_fbk;
+            o->joint[j].motor_pos_fbk += Sjm[j][m] * o->motor[m].pos_fbk;
+            o->joint[j].motor_vel_fbk += Sjm[j][m] * o->motor[m].vel_fbk;
         }
     }
     
-    if (!o->Jje) // no encoder coupling
+    if (!o->Sje) // no encoder coupling
     {
         for (js=0; js<N; ++js)
         {    
@@ -147,7 +151,7 @@ void JointSet_do_odometry(JointSet* o) //
             }
         }
     
-        float **Jje = o->Jje;
+        float **Sje = o->Sje;
         
         for (js=0; js<N; ++js)
         {
@@ -160,8 +164,8 @@ void JointSet_do_odometry(JointSet* o) //
             {
                 e = o->encoders_of_set[es];
                 
-                o->joint[j].pos_fbk += Jje[j][e] * pos[e];
-                o->joint[j].vel_fbk += Jje[j][e] * vel[e];
+                o->joint[j].pos_fbk += Sje[j][e] * pos[e];
+                o->joint[j].vel_fbk += Sje[j][e] * vel[e];
             }
         }
     }
