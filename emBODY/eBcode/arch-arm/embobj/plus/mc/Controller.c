@@ -15,7 +15,7 @@
 
 MController* smc = NULL;
 
-static char invert_matrix(float** M, float** I, char n);
+//static char invert_matrix(float** M, float** I, char n);
 //static void MController_config_motor_set(MController* o);
 //static void MController_config_encoder_set(MController* o);
 
@@ -66,24 +66,6 @@ MController* MController_new(uint8_t nJoints) //
         o->Sje[i] = NEW(float, nJoints);
         
         o->absEncoder[i] = NULL;
-        
-        ////////////////////////
-        
-        JointSet_config
-        (
-            o->jointSet+i,
-            o->set_dim+i,
-            o->jos[i],
-            o->mos[i],
-            o->eos[i],
-            o->joint, 
-            o->motor, 
-            o->Jjm,
-            o->Jmj,
-            o->Sje,
-            o->Sjm,
-            o->absEncoder
-        );
     }
     
     MController_init();
@@ -131,7 +113,7 @@ void MController_config_board(uint8_t part_type, uint8_t actuation_type)
     float **Jmj = o->Jmj;
   
     float **Sjm = o->Sjm;
-    float **Sje = o->Sje;
+    float **Sje = NULL; //o->Sje;
     
     switch (part_type)
     {
@@ -237,6 +219,7 @@ void MController_config_board(uint8_t part_type, uint8_t actuation_type)
         // |j0|   |  1     0    0   |   |e0|     
         // |j1| = |  0     1    0   | * |e1|
         // |j2|   |  1    -1  40/65 |   |e2|
+        Sje = o->Sje;
         Sje[2][0] = 1.0f; Sje[2][1] = -1.0f; Sje[2][2] = alfa;
         #endif
         
@@ -308,6 +291,56 @@ void MController_config_board(uint8_t part_type, uint8_t actuation_type)
     default:
         return;
     }
+    
+    for (int s=0; s<o->nSets; ++s) o->set_dim[s] = 0;
+ 
+    for (int j=0; j<o->nJoints; ++j)
+    {
+        int s = o->j2s[j];
+
+        o->jos[s][(o->set_dim[s])++] = j;
+    }
+
+    for (int s=0; s<o->nSets; ++s) o->set_dim[s] = 0;
+ 
+    for (int m=0; m<o->nJoints; ++m)
+    {
+        int s = o->m2s[m];
+
+        o->mos[s][(o->set_dim[s])++] = m;
+    }
+
+    for (int j=0; j<o->nJoints; ++j)
+    {
+        o->e2s[j] = o->j2s[j]; 
+    }
+    
+    for (int s=0; s<o->nSets; ++s)
+    {
+        for (int n=0; n<o->set_dim[n]; ++n)
+        {
+            o->eos[s][n] = o->jos[s][n];
+        }
+    }
+    
+    for (int s=0; s<o->nSets; ++s)
+    {
+        JointSet_config
+        (
+            o->jointSet+s,
+            o->set_dim+s,
+            o->jos[s],
+            o->mos[s],
+            o->eos[s],
+            o->joint, 
+            o->motor, 
+            Jjm,
+            Jmj,
+            Sje,
+            Sjm,
+            o->absEncoder
+        );
+    }
 }
 
 void MController_config_joint(int j, eOmc_joint_config_t* config) //
@@ -318,7 +351,7 @@ void MController_config_joint(int j, eOmc_joint_config_t* config) //
     
     // TODOALE move to motor config
     Motor_config_trqPID(o->motor+j, &(config->pidtorque));
-    Motor_config_filter(o->motor+j, config->tcfiltertype);
+    Motor_config_filter(o->motor+j,   config->tcfiltertype);
     Motor_config_friction(o->motor+j, config->motor_params.bemf_value, config->motor_params.ktau_value);
     
     switch(config->jntEncoderType)
@@ -622,6 +655,7 @@ static void MController_config_encoder_set(MController *o)
 #define FOR(i) for (int i=0; i<n; ++i)
 #define SCAN(r,c) FOR(r) FOR(c)
 
+/*
 static char invert_matrix(float** M, float** I, char n)
 {
     float B[MAX_PER_BOARD][MAX_PER_BOARD];
@@ -697,6 +731,7 @@ static char invert_matrix(float** M, float** I, char n)
     
     return 1;
 }
+*/
 
 #if 0
 /** @typedef    typedef struct eOmc_calibrator32_t
