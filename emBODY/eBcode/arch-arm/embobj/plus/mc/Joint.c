@@ -74,9 +74,9 @@ void Joint_init(Joint* o)
     o->pos_control_active = FALSE;
     o->trq_control_active = FALSE;
     
-    o->motor_control_type = PWM_CONTROLLED_MOTOR;
+    o->MOTOR_CONTROL_TYPE = PWM_CONTROLLED_MOTOR;
     
-    o->can_do_trq_ctrl = TRUE;
+    o->CAN_DO_TRQ_CTRL = TRUE;
     
     o->pushing_limit = FALSE;
     
@@ -175,11 +175,11 @@ BOOL Joint_set_control_mode(Joint* o, eOmc_controlmode_command_t control_mode)
             break;
                 
         case eomc_controlmode_cmd_openloop:
-            if (o->motor_control_type != PWM_CONTROLLED_MOTOR) return FALSE;
+            if (o->MOTOR_CONTROL_TYPE != PWM_CONTROLLED_MOTOR) return FALSE;
             break;
 
         case eomc_controlmode_cmd_torque:
-            if (!o->can_do_trq_ctrl) return FALSE;
+            if (!o->CAN_DO_TRQ_CTRL) return FALSE;
             break;
             
         default:
@@ -205,7 +205,7 @@ BOOL Joint_set_interaction_mode(Joint* o, eOmc_interactionmode_t interaction_mod
 {
     if (o->interaction_mode == interaction_mode) return TRUE;
     
-    if (!o->can_do_trq_ctrl)
+    if (!o->CAN_DO_TRQ_CTRL)
     {
         if (interaction_mode == eOmc_interactionmode_compliant)
         {

@@ -63,13 +63,13 @@ typedef struct // Joint
     eOmc_controlmode_t     control_mode;
     eOmc_interactionmode_t interaction_mode;
     
-    uint8_t motor_control_type;
+    uint8_t MOTOR_CONTROL_TYPE;
     
     int8_t pushing_limit;
     
     BOOL pos_control_active;
     BOOL trq_control_active;
-    BOOL can_do_trq_ctrl;
+    BOOL CAN_DO_TRQ_CTRL;
     
     uint32_t fault_state_mask;
 } Joint;

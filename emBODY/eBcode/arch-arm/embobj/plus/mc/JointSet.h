@@ -34,9 +34,9 @@ typedef struct // JointSet
     
     BOOL pos_control_active;
     BOOL trq_control_active;
-    BOOL can_do_trq_ctrl;
+    BOOL CAN_DO_TRQ_CTRL;
     
-    uint8_t motor_control_type;
+    uint8_t MOTOR_CONTROL_TYPE;
     
     BOOL is_calibrated;
 } JointSet;

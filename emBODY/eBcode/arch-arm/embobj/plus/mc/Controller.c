@@ -128,8 +128,10 @@ void MController_config_board(uint8_t part_type, uint8_t actuation_type)
         
         for (int k = 0; k<o->nJoints; ++k)
         {
-            o->joint[k].motor_control_type = PWM_CONTROLLED_MOTOR;
+            o->joint[k].CAN_DO_TRQ_CTRL = TRUE;
+            o->joint[k].MOTOR_CONTROL_TYPE = PWM_CONTROLLED_MOTOR;
             o->motor[k].MOTOR_CONTROL_TYPE = PWM_CONTROLLED_MOTOR;
+            o->motor[k].HARDWARE_TYPE = HARDWARE_2FOC;
         }
         
         break;
@@ -149,8 +151,10 @@ void MController_config_board(uint8_t part_type, uint8_t actuation_type)
         
         for (int k = 0; k<o->nJoints; ++k)
         {
-            o->joint[k].motor_control_type = PWM_CONTROLLED_MOTOR;
+            o->joint[k].CAN_DO_TRQ_CTRL = TRUE;
+            o->joint[k].MOTOR_CONTROL_TYPE = PWM_CONTROLLED_MOTOR;
             o->motor[k].MOTOR_CONTROL_TYPE = PWM_CONTROLLED_MOTOR;
+            o->motor[k].HARDWARE_TYPE = HARDWARE_2FOC;
         }
     
         break;
@@ -184,8 +188,10 @@ void MController_config_board(uint8_t part_type, uint8_t actuation_type)
         
         for (int k = 0; k<o->nJoints; ++k)
         {
-            o->joint[k].motor_control_type = PWM_CONTROLLED_MOTOR;
+            o->joint[k].CAN_DO_TRQ_CTRL = TRUE;
+            o->joint[k].MOTOR_CONTROL_TYPE = PWM_CONTROLLED_MOTOR;
             o->motor[k].MOTOR_CONTROL_TYPE = PWM_CONTROLLED_MOTOR;
+            o->motor[k].HARDWARE_TYPE = HARDWARE_2FOC;
         }
         
         break;
@@ -230,8 +236,10 @@ void MController_config_board(uint8_t part_type, uint8_t actuation_type)
         
         for (int k = 0; k<o->nJoints; ++k)
         {
-            o->joint[k].motor_control_type = PWM_CONTROLLED_MOTOR;
+            o->joint[k].CAN_DO_TRQ_CTRL = TRUE;
+            o->joint[k].MOTOR_CONTROL_TYPE = PWM_CONTROLLED_MOTOR;
             o->motor[k].MOTOR_CONTROL_TYPE = PWM_CONTROLLED_MOTOR;
+            o->motor[k].HARDWARE_TYPE = HARDWARE_2FOC;
         }
         
         break;
@@ -247,12 +255,16 @@ void MController_config_board(uint8_t part_type, uint8_t actuation_type)
         
         for (int k = 0; k<3; ++k)
         {
-            o->joint[k].motor_control_type = PWM_CONTROLLED_MOTOR;
+            o->joint[k].CAN_DO_TRQ_CTRL = FALSE;
+            o->joint[k].MOTOR_CONTROL_TYPE = PWM_CONTROLLED_MOTOR;
             o->motor[k].MOTOR_CONTROL_TYPE = PWM_CONTROLLED_MOTOR;
+            o->motor[k].HARDWARE_TYPE = HARDWARE_2FOC;
         }
         
-        o->joint[3].motor_control_type = VEL_CONTROLLED_MOTOR;
+        o->joint[3].CAN_DO_TRQ_CTRL = TRUE;
+        o->joint[3].MOTOR_CONTROL_TYPE = VEL_CONTROLLED_MOTOR;
         o->motor[3].MOTOR_CONTROL_TYPE = VEL_CONTROLLED_MOTOR;
+        o->motor[3].HARDWARE_TYPE = HARDWARE_2FOC;
     
         break;
 	case emscontroller_board_CER_BASE:                //= 21    //2FOC
@@ -267,8 +279,10 @@ void MController_config_board(uint8_t part_type, uint8_t actuation_type)
         
         for (int k = 0; k<o->nJoints; ++k)
         {
-            o->joint[k].motor_control_type = PWM_CONTROLLED_MOTOR;
+            o->joint[k].CAN_DO_TRQ_CTRL = FALSE;
+            o->joint[k].MOTOR_CONTROL_TYPE = PWM_CONTROLLED_MOTOR;
             o->motor[k].MOTOR_CONTROL_TYPE = PWM_CONTROLLED_MOTOR;
+            o->motor[k].HARDWARE_TYPE = HARDWARE_2FOC;
         }
     }
         break;
@@ -368,9 +382,9 @@ void MController_config_joint(int j, eOmc_joint_config_t* config) //
     }
 }
 
-void MController_config_motor(int m, uint8_t hardware_type, uint8_t motor_control_type, eOmc_motor_config_t* config) //
+void MController_config_motor(int m, eOmc_motor_config_t* config) //
 {
-    Motor_config(smc->motor+m, m, hardware_type, motor_control_type, config);
+    Motor_config(smc->motor+m, m, config);
 }
 
 void MController_config_motor_friction(int m, eOmc_motor_params_t* friction) //
@@ -558,7 +572,7 @@ void MController_do()
 {
     for (int s=0; s<smc->nSets; ++s)
     {
-        JointSet_do_odometry(smc->jointSet+s);
+        JointSet_do(smc->jointSet+s);
     }
 }
 
@@ -571,11 +585,6 @@ void MController_set_interaction_mode(uint8_t j, eOmc_interactionmode_t interact
 {
     JointSet_set_interaction_mode(smc->jointSet+smc->j2s[j], interaction_mode);
 } 
-
-void MController_calibrate_encoder(uint8_t e, eOmc_calibrator_t *calibrator)
-{
-    // TODOALE
-}
 
 // --------------------------------------------------------------------------------------------------------------------
 // - definition of static functions 
@@ -732,32 +741,6 @@ static char invert_matrix(float** M, float** I, char n)
     return 1;
 }
 */
-
-#if 0
-/** @typedef    typedef struct eOmc_calibrator32_t
-    @brief      eOmc_calibrator32_t specifies a calibrator with type and parameters for teh new definition of measures
- **/
-typedef struct                  // size is 1+3+4*4 = 20
-{
-    eOenum08_t                  type;                               /**< use eOmc_calibration_type_t */
-    uint8_t                     filler03[3];
-    union
-    {
-        uint32_t                                                any[6];
-        eOmc_calibrator_params_type0_hard_stops_t               type0;
-        eOmc_calibrator_params_type1_abs_sens_analog_t          type1;
-        eOmc_calibrator_params_type2_hard_stops_diff_t          type2;
-        eOmc_calibrator_params_type3_abs_sens_digital_t         type3;
-        eOmc_calibrator_params_type4_abs_and_incremental_t      type4;
-        eOmc_calibrator_params_type5_hard_stops_mc4plus_t       type5;
-        eOmc_calibrator_params_type6_mais_t                     type6;
-        eOmc_calibrator_params_type7_hall_sensor_t              type7;
-        eOmc_calibration_type8_adc_and_incr_mc4plus_t           type8;
-    } params;                                                       /**< the params of the calibrator */   
-} eOmc_calibrator32_t;           EO_VERIFYsizeof(eOmc_calibrator32_t, 28);
-
-typedef eOmc_calibrator32_t eOmc_calibrator_t;
-#endif
 
 void MController_calibrate(uint8_t e, eOmc_calibrator_t *calibrator)
 {

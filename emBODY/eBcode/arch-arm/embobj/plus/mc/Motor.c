@@ -124,12 +124,12 @@ void Motor_init(Motor* o) //
     WatchDog_init(&o->can_2FOC_alive_wdog);
 }
 
-void Motor_config(Motor* o, uint8_t ID, uint8_t HARDWARE_TYPE, uint8_t MOTOR_CONTROL_TYPE, eOmc_motor_config_t* config) //
+void Motor_config(Motor* o, uint8_t ID, eOmc_motor_config_t* config) //
 {
     // const init
     o->ID                 = ID;
-    o->HARDWARE_TYPE      = HARDWARE_TYPE;
-    o->MOTOR_CONTROL_TYPE = MOTOR_CONTROL_TYPE;
+    //o->HARDWARE_TYPE      = hardware_type;
+    //o->MOTOR_CONTROL_TYPE = motor_control_type;
     o->GEARBOX            = config->gearboxratio;
     o->HAS_TEMP_SENSOR    = config->hasTempSensor;
     

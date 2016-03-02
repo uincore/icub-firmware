@@ -785,7 +785,7 @@ extern void eoprot_fun_UPDT_mc_joint_cmmnds_calibration(const EOnv* nv, const eO
     
     if((eo_motcon_mode_foc == mcmode) || (eo_motcon_mode_mc4plus == mcmode) || (eo_motcon_mode_mc4plusmais == mcmode))
     {
-        MController_calibrate_encoder(jxx, calibrator);        
+        MController_calibrate(jxx, calibrator);        
     } 
     else if(eo_motcon_mode_mc4 == mcmode)
     {
@@ -1314,14 +1314,14 @@ extern void eoprot_fun_UPDT_mc_motor_config(const EOnv* nv, const eOropdescripto
         
     if(eo_motcon_mode_foc == mcmode)
     {
-        MController_config_motor(mxx, HARDWARE_2FOC, PWM_CONTROLLED_MOTOR, mconfig);
+        MController_config_motor(mxx, mconfig);
         // TODOALE
         //mconfig->pwmLimit = eo_emsController_GetActuationLimit(mxx);
         return;           
     }
     else if((eo_motcon_mode_mc4plus == mcmode) || (eo_motcon_mode_mc4plusmais == mcmode))   
     {
-        MController_config_motor(mxx, HARDWARE_MC4p, PWM_CONTROLLED_MOTOR, mconfig);
+        MController_config_motor(mxx, mconfig);
         eo_currents_watchdog_UpdateCurrentLimits( eo_currents_watchdog_GetHandle(), mxx);
         // If pwmLimit is bigger than hardwhere limit, emsController uses hardwarelimit. 
         // Therefore I need to update netvar with the limit used in emsController.

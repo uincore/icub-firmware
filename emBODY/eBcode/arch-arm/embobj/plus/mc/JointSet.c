@@ -44,11 +44,11 @@ void JointSet_init(JointSet* o) //
     o->control_mode     = eomc_controlmode_notConfigured;
     o->interaction_mode = eOmc_interactionmode_stiff;
     
-    o->motor_control_type = PWM_CONTROLLED_MOTOR; 
+    o->MOTOR_CONTROL_TYPE = PWM_CONTROLLED_MOTOR; 
     
     o->pos_control_active = TRUE;
     o->trq_control_active = FALSE; 
-    o->can_do_trq_ctrl = TRUE;
+    o->CAN_DO_TRQ_CTRL = TRUE;
     
     //BOOL is_calibrated = FALSE;
 }
@@ -206,7 +206,7 @@ static void JointSet_do_vel_control(JointSet* o);
 
 void JointSet_do_control(JointSet* o)
 {
-    switch (o->motor_control_type)
+    switch (o->MOTOR_CONTROL_TYPE)
     {
     case PWM_CONTROLLED_MOTOR:
         JointSet_do_pwm_control(o);
@@ -222,7 +222,7 @@ void JointSet_do_control(JointSet* o)
     }
 }
 
-static BOOL JointSet_do_wait_calibration(JointSet* o);
+static void JointSet_do_wait_calibration(JointSet* o);
 
 void JointSet_do(JointSet* o)
 {
@@ -250,9 +250,9 @@ BOOL JointSet_set_control_mode(JointSet* o, eOmc_controlmode_command_t control_m
     
     if (o->control_mode == eomc_controlmode_notConfigured) return FALSE;
     
-    if (control_mode == eomc_ctrlmval_openloop && o->motor_control_type != PWM_CONTROLLED_MOTOR) return FALSE;
+    if (control_mode == eomc_ctrlmval_openloop && o->MOTOR_CONTROL_TYPE != PWM_CONTROLLED_MOTOR) return FALSE;
     
-    if (control_mode == eomc_controlmode_torque && !o->can_do_trq_ctrl) return FALSE;
+    if (control_mode == eomc_controlmode_torque && !o->CAN_DO_TRQ_CTRL) return FALSE;
     
     int N = *(o->pN);
     
@@ -493,7 +493,7 @@ static void JointSet_do_vel_control(JointSet* o)
     }
 }
 
-static BOOL JointSet_do_wait_calibration(JointSet* o)
+static void JointSet_do_wait_calibration(JointSet* o)
 {
     int N = *(o->pN);
     
@@ -503,21 +503,26 @@ static BOOL JointSet_do_wait_calibration(JointSet* o)
         
         if (!Motor_is_calibrated(o->motor+m))
         {
-            return FALSE;
+            return;
         }
     }
 
+    AbsEncoder *enc;
+    
     for (int es=0; es<N; ++es)
     {
-        int e = o->encoders_of_set[es];
+        enc = o->absEncoder[o->encoders_of_set[es]];
         
-        if (!AbsEncoder_is_calibrated(o->absEncoder[e]))
+        if (enc)
         {
-            return FALSE;
+            if (!AbsEncoder_is_calibrated(enc))
+            {
+                return;
+            }
         }
     }
     
-    return TRUE;
+    o->is_calibrated = TRUE;
 }
 
 static void JointSet_set_inner_control_flags(JointSet* o)

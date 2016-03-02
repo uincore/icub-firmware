@@ -179,7 +179,7 @@ typedef struct //Motor
 
 extern Motor* Motor_new(uint8_t n);  //
 extern void Motor_init(Motor* o);  //
-extern void Motor_config(Motor* o, uint8_t ID, uint8_t HARDWARE_TYPE, uint8_t MOTOR_CONTROL_TYPE, eOmc_motor_config_t* config); //
+extern void Motor_config(Motor* o, uint8_t ID, eOmc_motor_config_t* config); //
 extern void Motor_destroy(Motor* o); //
 
 extern void Motor_config_trqPID(Motor* o, eOmc_PID_t* pid); //
