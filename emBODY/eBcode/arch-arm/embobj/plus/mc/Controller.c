@@ -45,13 +45,13 @@ MController* MController_new(uint8_t nJoints) //
     o->joint = Joint_new(nJoints);
     o->motor = Motor_new(nJoints); 
     
+    o->absEncoder = NEW(AbsEncoder, nJoints);
+    
     o->Jjm = NEW(float*, nJoints);
     o->Jmj = NEW(float*, nJoints);
     
     o->Sjm = NEW(float*, nJoints);
     o->Sje = NEW(float*, nJoints);
-    
-    o->absEncoder = NEW(AbsEncoder*, nJoints);
     
     for (int i=0; i<nJoints; ++i)
     {
@@ -64,8 +64,6 @@ MController* MController_new(uint8_t nJoints) //
         
         o->Sjm[i] = NEW(float, nJoints);
         o->Sje[i] = NEW(float, nJoints);
-        
-        o->absEncoder[i] = NULL;
     }
     
     MController_init();
@@ -83,8 +81,6 @@ void MController_init() //
     
     for (int i=0; i<o->nJoints; ++i)
     {
-        o->absEncoder[i] = NULL;
-        
         o->j2s[i] = i;
         o->m2s[i] = i;
         o->e2s[i] = i;
@@ -106,7 +102,7 @@ void MController_config_board(uint8_t part_type, uint8_t actuation_type)
 {
     MController *o = smc;
     
-    //o->part_type      = part_type;
+    o->part_type      = part_type;
     o->actuation_type = actuation_type;
     
     float **Jjm = o->Jjm;
@@ -371,13 +367,11 @@ void MController_config_joint(int j, eOmc_joint_config_t* config) //
     switch(config->jntEncoderType)
     {
         case eomc_encoder_AEA:
-            o->absEncoder[j] = AbsEncoder_new(1);
-            AbsEncoder_config(o->absEncoder[j], j, config->jntEncoderResolution, AEA_DEFAULT_SPIKE_MAG_LIMIT, AEA_DEFAULT_SPIKE_CNT_LIMIT);
+            AbsEncoder_config(o->absEncoder+j, j, config->jntEncoderResolution, AEA_DEFAULT_SPIKE_MAG_LIMIT, AEA_DEFAULT_SPIKE_CNT_LIMIT);
             break;
         
         default:
-            AbsEncoder_destroy(o->absEncoder[j]);
-            o->absEncoder[j] = NULL;
+            AbsEncoder_config_fake(o->absEncoder+j, j);
             break;
     }
 }
@@ -545,7 +539,7 @@ void MController_update_joint_torque_fbk(uint8_t j, CTRL_UNITS trq_fbk) //
 
 void MController_update_absEncoder_fbk(uint8_t e, int32_t position) //
 {
-    AbsEncoder_update(smc->absEncoder[e], position);
+    AbsEncoder_update(smc->absEncoder+e, position);
 }
 
 void MController_update_motor_state_fbk(uint8_t m, void* state)
@@ -555,17 +549,17 @@ void MController_update_motor_state_fbk(uint8_t m, void* state)
 
 void MController_invalid_absEncoder_fbk(uint8_t e, hal_spiencoder_errors_flags error_flags) //
 {
-    AbsEncoder_invalid(smc->absEncoder[e], error_flags);
+    AbsEncoder_invalid(smc->absEncoder+e, error_flags);
 }
 
 void MController_timeout_absEncoder_fbk(uint8_t e) //
 {
-    AbsEncoder_timeout(smc->absEncoder[e]);
+    AbsEncoder_timeout(smc->absEncoder+e);
 }
 
 int32_t MController_get_absEncoder(uint8_t j)
 {
-    return smc->absEncoder[j]->distance;
+    return AbsEncoder_position(smc->absEncoder+j);
 }
 
 void MController_do()

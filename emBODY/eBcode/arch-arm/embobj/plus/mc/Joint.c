@@ -30,8 +30,8 @@ void Joint_init(Joint* o)
     o->vel_fbk = ZERO;
     o->trq_fbk = ZERO;
     
-    o->motor_pos_fbk = ZERO;
-    o->motor_vel_fbk = ZERO;
+    o->pos_fbk_from_motors = ZERO;
+    o->vel_fbk_from_motors = ZERO;
     
     o->out_ref = ZERO;
     o->pos_ref = ZERO;
@@ -193,14 +193,6 @@ BOOL Joint_set_control_mode(Joint* o, eOmc_controlmode_command_t control_mode)
     return TRUE;
 }
 
-#if 0
-typedef struct // Joint
-{    
-    WatchDog trq_fbk_wdog;
-    WatchDog vel_ref_wdog;
-} Joint;
-#endif
-
 BOOL Joint_set_interaction_mode(Joint* o, eOmc_interactionmode_t interaction_mode)
 {
     if (o->interaction_mode == interaction_mode) return TRUE;
@@ -264,8 +256,11 @@ extern void Joint_clear_faults(Joint* o)
 
 int8_t Joint_check_limits(Joint* o)
 {
-    if (o->pos_fbk <= o->pos_min) return -1;
-    if (o->pos_fbk >= o->pos_max) return  1;
+    if (o->pos_min != o->pos_max)
+    {
+        if (o->pos_fbk <= o->pos_min) return -1;
+        if (o->pos_fbk >= o->pos_max) return  1;
+    }
     
     return 0;
 }
@@ -306,15 +301,22 @@ CTRL_UNITS Joint_do_pwm_control(Joint* o)
         
             o->output = o->trq_ref;
         
-            if (o->pos_fbk <= o->pos_min) 
+            if (o->pos_min != o->pos_max)
             {
-                o->output_lim = PID_do_out(&o->posPID, o->pos_min-o->pos_fbk);
-                o->pushing_limit = -1;
-            }
-            else if (o->pos_fbk >= o->pos_max)
-            {
-                o->output_lim = PID_do_out(&o->posPID, o->pos_max-o->pos_fbk);
-                o->pushing_limit =  1;
+                if (o->pos_fbk <= o->pos_min) 
+                {
+                    o->output_lim = PID_do_out(&o->posPID, o->pos_min-o->pos_fbk);
+                    o->pushing_limit = -1;
+                }
+                else if (o->pos_fbk >= o->pos_max)
+                {
+                    o->output_lim = PID_do_out(&o->posPID, o->pos_max-o->pos_fbk);
+                    o->pushing_limit =  1;
+                }
+                else
+                {
+                    o->output_lim = ZERO;
+                }
             }
             else
             {
@@ -354,15 +356,22 @@ CTRL_UNITS Joint_do_pwm_control(Joint* o)
                 
                 o->output = o->trq_ref;
                 
-                if (o->pos_fbk <= o->pos_min) 
+                if (o->pos_min != o->pos_max)
                 {
-                    o->output_lim = PID_do_out(&o->posPID, o->pos_min-o->pos_fbk);
-                    o->pushing_limit = -1;
-                }
-                else if (o->pos_fbk >= o->pos_max)
-                {
-                    o->output_lim = PID_do_out(&o->posPID, o->pos_max-o->pos_fbk);
-                    o->pushing_limit =  1;
+                    if (o->pos_fbk <= o->pos_min) 
+                    {
+                        o->output_lim = PID_do_out(&o->posPID, o->pos_min-o->pos_fbk);
+                        o->pushing_limit = -1;
+                    }
+                    else if (o->pos_fbk >= o->pos_max)
+                    {
+                        o->output_lim = PID_do_out(&o->posPID, o->pos_max-o->pos_fbk);
+                        o->pushing_limit =  1;
+                    }
+                    else
+                    {
+                        o->output_lim = ZERO;
+                    }
                 }
                 else
                 {
@@ -398,15 +407,22 @@ CTRL_UNITS Joint_do_vel_control(Joint* o)
             o->vel_err = o->vel_ref = ZERO;
             o->trq_err = o->trq_ref - o->trq_fbk;
         
-            if (o->pos_fbk <= o->pos_min) 
+            if (o->pos_min != o->pos_max)
             {
-                o->pushing_limit = -1;
-                o->vel_ref = o->scKstill * (o->pos_min - o->pos_fbk);        
-            }
-            else if (o->pos_fbk >= o->pos_max)
-            {
-                o->pushing_limit =  1;
-                o->vel_ref = o->scKstill * (o->pos_max - o->pos_fbk);
+                if (o->pos_fbk <= o->pos_min) 
+                {
+                    o->pushing_limit = -1;
+                    o->vel_ref = o->scKstill * (o->pos_min - o->pos_fbk);        
+                }
+                else if (o->pos_fbk >= o->pos_max)
+                {
+                    o->pushing_limit =  1;
+                    o->vel_ref = o->scKstill * (o->pos_max - o->pos_fbk);
+                }
+                else
+                {
+                    o->vel_ref = -o->Kadmitt * o->trq_err;
+                }
             }
             else
             {
@@ -459,16 +475,22 @@ CTRL_UNITS Joint_do_vel_control(Joint* o)
             }
             else
             {
-                if (o->pos_fbk <= o->pos_min) 
+                if (o->pos_min != o->pos_max)
                 {
-                    o->pushing_limit = -1;
-                    o->vel_ref = o->scKstill * (o->pos_min - o->pos_fbk);
-                    
-                }
-                else if (o->pos_fbk >= o->pos_max)
-                {
-                    o->pushing_limit =  1;
-                    o->vel_ref = o->scKstill * (o->pos_max - o->pos_fbk);
+                    if (o->pos_fbk <= o->pos_min) 
+                    {
+                        o->pushing_limit = -1;
+                        o->vel_ref = o->scKstill * (o->pos_min - o->pos_fbk);
+                    }
+                    else if (o->pos_fbk >= o->pos_max)
+                    {
+                        o->pushing_limit =  1;
+                        o->vel_ref = o->scKstill * (o->pos_max - o->pos_fbk);
+                    }
+                    else
+                    {
+                        o->vel_ref += o->scKpos * (o->pos_err + o->Kadmitt * o->trq_fbk);
+                    }
                 }
                 else
                 {
@@ -570,7 +592,7 @@ BOOL Joint_set_pos_ref(Joint* o, CTRL_UNITS pos_ref, CTRL_UNITS vel_ref)
         return FALSE;
     }
     
-    LIMIT2(o->pos_min, pos_ref, o->pos_max);
+    if (o->pos_min != o->pos_max) LIMIT2(o->pos_min, pos_ref, o->pos_max);
     
     LIMIT(vel_ref, o->vel_max);
     
@@ -617,7 +639,7 @@ BOOL Joint_set_pos_raw(Joint* o, CTRL_UNITS pos_ref)
         return FALSE;
     }
     
-    LIMIT2(o->pos_min, pos_ref, o->pos_max);
+    if (o->pos_min != o->pos_max) LIMIT2(o->pos_min, pos_ref, o->pos_max);
     
     o->pos_ref = pos_ref;
     o->vel_ref = 0.0f;

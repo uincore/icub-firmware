@@ -50,7 +50,7 @@ void JointSet_init(JointSet* o) //
     o->trq_control_active = FALSE; 
     o->CAN_DO_TRQ_CTRL = TRUE;
     
-    //BOOL is_calibrated = FALSE;
+    o->is_calibrated = FALSE;
 }
 
 void JointSet_config //
@@ -66,7 +66,7 @@ void JointSet_config //
     float** Jmj,
     float** Sje,
     float** Sjm,
-    AbsEncoder **absEncoder
+    AbsEncoder *absEncoder
 )
 {
     o->pN = pN;
@@ -91,19 +91,42 @@ void JointSet_do_odometry(JointSet* o) //
             
     float **Sjm = o->Sjm;
     
-    for (js=0; js<N; ++js)
+    if (Sjm)
     {
-        j = o->joints_of_set[js];
-
-        o->joint[j].motor_pos_fbk = ZERO;
-        o->joint[j].motor_vel_fbk = ZERO;
-        
-        for (ms=0; ms<N; ++ms)
+        for (js=0; js<N; ++js)
         {
-            m = o->motors_of_set[ms];
+            j = o->joints_of_set[js];
+
+            o->joint[j].pos_fbk_from_motors = ZERO;
+            o->joint[j].vel_fbk_from_motors = ZERO;
+            
+            for (ms=0; ms<N; ++ms)
+            {
+                m = o->motors_of_set[ms];
         
-            o->joint[j].motor_pos_fbk += Sjm[j][m] * o->motor[m].pos_fbk;
-            o->joint[j].motor_vel_fbk += Sjm[j][m] * o->motor[m].vel_fbk;
+                o->joint[j].pos_fbk_from_motors += Sjm[j][m] * o->motor[m].pos_fbk;
+                o->joint[j].vel_fbk_from_motors += Sjm[j][m] * o->motor[m].vel_fbk;
+            }
+        
+            if (AbsEncoder_is_fake(o->absEncoder+j))
+            {
+                o->joint[j].pos_fbk_from_motors += o->absEncoder[j].offset;
+            }
+        }
+    }
+    else
+    {
+        for (js=0; js<N; ++js)
+        {
+            j = o->joints_of_set[js];
+            
+            o->joint[j].pos_fbk_from_motors = o->motor[j].pos_fbk;
+            o->joint[j].vel_fbk_from_motors = o->motor[j].vel_fbk;
+            
+            if (AbsEncoder_is_fake(o->absEncoder+j))
+            {
+                o->joint[j].pos_fbk_from_motors += o->absEncoder[j].offset;
+            }
         }
     }
     
@@ -113,15 +136,19 @@ void JointSet_do_odometry(JointSet* o) //
         {    
             j = o->encoders_of_set[js];
         
-            if (o->absEncoder[j])
+            if (AbsEncoder_is_fake(o->absEncoder+j))
             {
-                o->joint[j].pos_fbk = AbsEncoder_position(o->absEncoder[j]);
-                o->joint[j].vel_fbk = AbsEncoder_velocity(o->absEncoder[j]);
+                o->joint[j].pos_fbk = o->joint[j].pos_fbk_from_motors + o->absEncoder[j].offset;
+                o->joint[j].vel_fbk = o->joint[j].vel_fbk_from_motors;
             }
             else
             {
-                o->joint[j].pos_fbk = o->joint[j].motor_pos_fbk;
-                o->joint[j].vel_fbk = o->joint[j].motor_vel_fbk;
+                o->joint[j].pos_fbk = AbsEncoder_position(o->absEncoder+j);
+                #ifdef USE_SPEED_FBK_FROM_MOTORS
+                o->joint[j].vel_fbk = o->joint[j].vel_fbk_from_motors;
+                #else
+                o->joint[j].vel_fbk = AbsEncoder_velocity(o->absEncoder+j);
+                #endif
             }
         }
         
@@ -139,15 +166,20 @@ void JointSet_do_odometry(JointSet* o) //
         {    
             e = o->encoders_of_set[es];
         
-            if (o->absEncoder[e])
+            if (AbsEncoder_is_fake(o->absEncoder+e))
             {
-                pos[e] = AbsEncoder_position(o->absEncoder[e]);
-                vel[e] = AbsEncoder_velocity(o->absEncoder[e]);
+                pos[e] = o->joint[e].pos_fbk_from_motors + o->absEncoder[e].offset;
+                vel[e] = o->joint[e].vel_fbk_from_motors;
             }
             else
             {
-                pos[e] = o->joint[e].motor_pos_fbk;
-                vel[e] = o->joint[e].motor_vel_fbk;
+                pos[e] = AbsEncoder_position(o->absEncoder+e);
+                
+                #ifdef USE_SPEED_FBK_FROM_MOTORS
+                vel[e] = o->joint[e].vel_fbk_from_motors;
+                #else
+                vel[e] = AbsEncoder_velocity(o->absEncoder+e);
+                #endif
             }
         }
     
@@ -183,7 +215,7 @@ BOOL JointSet_do_check_faults(JointSet* o)
         
         if (Motor_check_faults(o->motor+o->motors_of_set[k])) fault = TRUE;
         
-        if (AbsEncoder_is_in_fault(o->absEncoder[o->encoders_of_set[k]])) fault = TRUE;
+        if (AbsEncoder_is_in_fault(o->absEncoder+o->encoders_of_set[k])) fault = TRUE;
     }
     
     if (fault)
@@ -264,7 +296,7 @@ BOOL JointSet_set_control_mode(JointSet* o, eOmc_controlmode_command_t control_m
             {   
                 Motor_force_idle(o->motor+o->motors_of_set[k]);
                 
-                AbsEncoder_clear_faults(o->absEncoder[o->encoders_of_set[k]]);
+                AbsEncoder_clear_faults(o->absEncoder+o->encoders_of_set[k]);
                 
                 Joint_set_control_mode(o->joint+o->joints_of_set[k], eomc_controlmode_cmd_force_idle);
             }
@@ -507,18 +539,11 @@ static void JointSet_do_wait_calibration(JointSet* o)
         }
     }
 
-    AbsEncoder *enc;
-    
     for (int es=0; es<N; ++es)
     {
-        enc = o->absEncoder[o->encoders_of_set[es]];
-        
-        if (enc)
+        if (!AbsEncoder_is_calibrated(o->absEncoder+o->encoders_of_set[es]))
         {
-            if (!AbsEncoder_is_calibrated(enc))
-            {
-                return;
-            }
+            return;
         }
     }
     
@@ -582,7 +607,7 @@ void JointSet_calibrate(JointSet* o, uint8_t e, eOmc_calibrator_t *calibrator)
     switch (calibrator->type)
     {
         case eomc_calibration_type3_abs_sens_digital:
-            AbsEncoder_calibrate(o->absEncoder[e], calibrator->params.type3.calibrationZero);
+            AbsEncoder_calibrate(o->absEncoder+e, calibrator->params.type3.calibrationZero);
             break;
         
         case eomc_calibration_type9_motor_self_calibrated:

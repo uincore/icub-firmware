@@ -44,7 +44,7 @@ void Trajectory_init(Trajectory *o, int32_t p0, int32_t v0, int32_t a0)
 
 void Trajectory_set_pos_raw(Trajectory *o, float p0)
 {
-    LIMIT2(o->pos_min, p0, o->pos_max)
+    if (o->pos_min != o->pos_max) LIMIT2(o->pos_min, p0, o->pos_max)
     
     o->xX = p0;
     o->xV = 0.0f;
@@ -215,35 +215,38 @@ int8_t Trajectory_do_step(Trajectory* o, float *p, float *v, float *a)
         *a = o->xA;
     }
     
-    if (*p <= o->pos_min)
-    {
-        if (*v < 0.0f)
+    if (o->pos_min != o->pos_max)
+    {    
+        if (*p <= o->pos_min)
         {
-            if (o->bVelocityMove || (o->vTimer < o->vT)) Trajectory_velocity_stop(o);
+            if (*v < 0.0f)
+            {
+                if (o->bVelocityMove || (o->vTimer < o->vT)) Trajectory_velocity_stop(o);
 
-            *v = 0.0f;
-        }
+                *v = 0.0f;
+            }
 		
-		if (*a < 0.0f) *a = 0.0f;
+            if (*a < 0.0f) *a = 0.0f;
         
-        *p = o->pos_min;
+            *p = o->pos_min;
         
-        return -1;
-    }
-    else if (*p >= o->pos_max)
-    {
-        if (*v > 0.0f)
+            return -1;
+        }
+        else if (*p >= o->pos_max)
         {
-            if (o->bVelocityMove || (o->vTimer < o->vT)) Trajectory_velocity_stop(o);
+            if (*v > 0.0f)
+            {
+                if (o->bVelocityMove || (o->vTimer < o->vT)) Trajectory_velocity_stop(o);
           
-            *v = 0.0f;
-        }
+                *v = 0.0f;
+            }
 		
-		if (*a > 0.0f) *a = 0.0f;
+            if (*a > 0.0f) *a = 0.0f;
              
-        *p = o->pos_max;
+            *p = o->pos_max;
         
-        return  1;
+            return  1;
+        }
     }
     
     return 0;

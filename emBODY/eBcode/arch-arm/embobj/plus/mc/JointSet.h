@@ -27,7 +27,7 @@ typedef struct // JointSet
     float** Sje;
     float** Sjm;
     
-    AbsEncoder** absEncoder;
+    AbsEncoder* absEncoder;
  
     eOmc_controlmode_t control_mode;
     uint8_t interaction_mode;
@@ -58,7 +58,7 @@ extern void JointSet_config //
     float** Jmj,
     float** Sje,
     float** Sjm,
-    AbsEncoder **absEncoder
+    AbsEncoder *absEncoder
 );
 
 extern void JointSet_do_odometry(JointSet* o); //

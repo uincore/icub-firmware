@@ -36,8 +36,8 @@ typedef struct // Joint
     CTRL_UNITS vel_fbk;
     CTRL_UNITS trq_fbk;    
     
-    CTRL_UNITS motor_pos_fbk;
-    CTRL_UNITS motor_vel_fbk;
+    CTRL_UNITS pos_fbk_from_motors;
+    CTRL_UNITS vel_fbk_from_motors;
     
     CTRL_UNITS pos_err;
     CTRL_UNITS vel_err;

@@ -35,6 +35,8 @@ typedef struct //AbsEncoder
     int8_t ID;
     int8_t valid_first_data_cnt;
     
+    BOOL fake;
+    
     union
     {
         struct
@@ -85,6 +87,10 @@ extern BOOL AbsEncoder_is_ok(AbsEncoder* o);
 extern BOOL AbsEncoder_is_calibrated(AbsEncoder* o);
 extern BOOL AbsEncoder_is_in_fault(AbsEncoder* o);
 extern void AbsEncoder_clear_faults(AbsEncoder* o);
+
+extern void AbsEncoder_overwrite(AbsEncoder* o, int32_t position, int32_t velocity);
+extern BOOL AbsEncoder_is_fake(AbsEncoder* o);
+extern void AbsEncoder_config_fake(AbsEncoder* o, uint8_t ID);
 
 #endif
 

@@ -37,10 +37,10 @@ typedef struct //MController
     float **Sje;
     float **Sjm;
     
-    //uint8_t part_type;
+    uint8_t part_type;
     uint8_t actuation_type;
     
-    AbsEncoder **absEncoder;
+    AbsEncoder *absEncoder;
 } MController;
 
 extern MController* MController_new(uint8_t nJoints); //

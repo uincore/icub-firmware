@@ -93,6 +93,7 @@ extern "C" {
 #define MAX_NAXLES 4
 
 #define USE_FLOAT_CTRL_UNITS
+#define USE_SPEED_FBK_FROM_MOTORS
 
 #ifdef USE_FLOAT_CTRL_UNITS
     typedef float   CTRL_UNITS;

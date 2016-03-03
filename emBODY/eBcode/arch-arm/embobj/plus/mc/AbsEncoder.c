@@ -35,6 +35,8 @@ void AbsEncoder_init(AbsEncoder* o)
     
     o->sign = 0;
     
+    o->fake = FALSE;
+    
     ////////////////////// set by calibrate
     
     o->offset = 0;
@@ -73,12 +75,26 @@ void AbsEncoder_config(AbsEncoder* o, uint8_t ID, int32_t resolution, int16_t sp
 {
     o->ID = ID;
     
+    o->fake = FALSE;
+    
     o->spike_mag_limit = spike_mag_limit;//7*(65536L/resolution);
     o->spike_cnt_limit = spike_cnt_limit;//7*(65536L/resolution);
     
     o->sign = resolution >= 0 ? 1 : -1;
     
-    o->state.bits.not_configured = FALSE;    
+    o->state.bits.not_configured = FALSE;
+}
+
+void AbsEncoder_config_fake(AbsEncoder* o, uint8_t ID)
+{
+    o->ID = ID;
+    
+    o->fake = TRUE;
+    
+    o->sign = 1;
+    
+    o->state.bits.not_configured = FALSE;
+    o->state.bits.not_initialized = FALSE;    
 }
 
 void AbsEncoder_calibrate(AbsEncoder* o, int32_t offset)
@@ -107,6 +123,8 @@ void AbsEncoder_posvel(AbsEncoder* o, int32_t* position, int32_t* velocity)
 static void AbsEncoder_position_init(AbsEncoder* o, int16_t position)
 {
     if (!o) return;
+    
+    if (o->fake) return;
     
     if (!o->valid_first_data_cnt)
     {
@@ -141,6 +159,8 @@ void AbsEncoder_timeout(AbsEncoder* o)
 {
     if (!o) return;
     
+    if (o->fake) return;
+    
     if (o->state.bits.not_configured) return;
     
     if (o->state.bits.not_calibrated) return;
@@ -162,6 +182,8 @@ void AbsEncoder_timeout(AbsEncoder* o)
 void AbsEncoder_invalid(AbsEncoder* o, hal_spiencoder_errors_flags error_flags)
 {
     if (!o) return;
+    
+    if (o->fake) return;
     
     if (o->state.bits.not_configured) return;
     
@@ -188,6 +210,8 @@ int32_t AbsEncoder_update(AbsEncoder* o, int16_t position)
 {
     if (!o) return 0;
         
+    if (o->fake) return 0;
+    
     if (o->state.bits.not_configured) return 0;
     
     if (o->state.bits.not_calibrated) return 0;
@@ -264,6 +288,19 @@ int32_t AbsEncoder_update(AbsEncoder* o, int16_t position)
     }
     
     return o->sign*o->distance;
+}
+
+void AbsEncoder_overwrite(AbsEncoder* o, int32_t position, int32_t velocity)
+{
+    if (!o->fake) return;
+    
+    o->distance = position + o->offset;
+    o->velocity = velocity;
+}
+
+BOOL AbsEncoder_is_fake(AbsEncoder* o)
+{
+    return o->fake;
 }
 
 BOOL AbsEncoder_is_ok(AbsEncoder* o)
