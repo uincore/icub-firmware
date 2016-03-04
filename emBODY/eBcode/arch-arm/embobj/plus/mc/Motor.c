@@ -15,6 +15,8 @@
 
 #include "Motor.h"
 
+#include "hal_led.h"
+
 /////////////////////////////////////////////////////////
 // Motor
 
@@ -183,9 +185,11 @@ void Motor_config_friction(Motor* o, float Bemf, float Ktau) //
     PID_config_friction(&o->trqPID, Bemf, Ktau);
 }
 
-void Motor_config_pos_offset(Motor* o, int32_t offset) //
+void Motor_calibrate(Motor* o, int32_t offset) //
 {
     o->pos_calib_offset = offset;
+    
+    Motor_set_run(o);
 }
 
 void Motor_set_run(Motor* o) //
@@ -426,8 +430,10 @@ void Motor_set_Iqq_ref(Motor* o, int32_t Iqq_ref)
 }
 
 void Motor_set_vel_ref(Motor* o, int32_t vel_ref) 
-{ 
-    o->output = o->vel_ref = CUT(vel_ref, o->vel_max); 
+{
+    o->vel_ref = vel_ref;
+    //o->vel_ref = CUT(vel_ref, o->vel_max);
+    o->output = (o->vel_ref * o->GEARBOX)/1000;
 }
 
 /*
@@ -460,7 +466,9 @@ void Motor_get_state(Motor* o, eOmc_motor_status_t* motor_status)
 }
 
 void Motor_update_pos_fbk(Motor* o, int32_t position)
-{    
+{
+    position += o->pos_calib_offset;
+    
     //valid for init
     if ((o->pos_fbk == 0) && (o->pos_fbk_old == 0))
     {

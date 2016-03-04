@@ -13,6 +13,8 @@
 
 #include "Controller.h"
 
+#include "hal_led.h"
+
 MController* smc = NULL;
 
 //static char invert_matrix(float** M, float** I, char n);
@@ -131,6 +133,27 @@ void MController_config_board(uint8_t part_type, uint8_t actuation_type)
         }
         
         break;
+    
+    case emscontroller_board_CER_UPPER_ARM:               //= 17,    //2FOC
+        o->nJoints = 2;
+        o->nSets   = 2;
+    
+        o->j2s[0] = 0; o->m2s[0] = 0;
+        o->j2s[1] = 1; o->m2s[1] = 1;
+        
+        for (int k = 0; k<o->nJoints; ++k)
+        {
+            o->joint[k].CAN_DO_TRQ_CTRL = TRUE;
+            o->joint[k].MOTOR_CONTROL_TYPE = VEL_CONTROLLED_MOTOR;
+            o->motor[k].MOTOR_CONTROL_TYPE = VEL_CONTROLLED_MOTOR;
+            o->motor[k].HARDWARE_TYPE = HARDWARE_2FOC;
+        }
+        
+        o->jointSet[0].MOTOR_CONTROL_TYPE = VEL_CONTROLLED_MOTOR;
+        o->jointSet[1].MOTOR_CONTROL_TYPE = VEL_CONTROLLED_MOTOR;
+        
+        break;
+        
     case emscontroller_board_UPPERLEG:                //= 2,    //2FOC
         o->nJoints = 4;
         o->nSets   = 4;
@@ -350,6 +373,8 @@ void MController_config_board(uint8_t part_type, uint8_t actuation_type)
             Sjm,
             o->absEncoder
         );
+        
+        o->jointSet[s].led = hal_led1 + s;
     }
 }
 
@@ -563,11 +588,13 @@ int32_t MController_get_absEncoder(uint8_t j)
 }
 
 void MController_do()
-{
+{    
     for (int s=0; s<smc->nSets; ++s)
     {
         JointSet_do(smc->jointSet+s);
     }
+    
+    Motor_actuate(smc->motor, smc->nJoints);
 }
 
 BOOL MController_set_control_mode(uint8_t j, eOmc_controlmode_command_t control_mode) //

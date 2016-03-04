@@ -101,7 +101,7 @@ void AbsEncoder_calibrate(AbsEncoder* o, int32_t offset)
 {
     o->offset = offset;
     
-    o->state.bits.not_calibrated = FALSE; 
+    o->state.bits.not_calibrated = FALSE;
 }
 
 int32_t AbsEncoder_position(AbsEncoder* o)

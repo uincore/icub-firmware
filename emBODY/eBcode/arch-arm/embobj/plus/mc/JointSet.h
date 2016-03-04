@@ -10,8 +10,12 @@
 #include "AbsEncoder.h"
 #include "Pid.h"
 
+#include "hal_led.h"
+
 typedef struct // JointSet
 {
+    hal_led_t led;
+    
     uint8_t* pN;
     
     uint8_t* joints_of_set;

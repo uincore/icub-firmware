@@ -11,6 +11,8 @@
 
 #include "JointSet.h"
 
+#include "hal_led.h"
+
 JointSet* JointSet_new(uint8_t n) //
 {
     JointSet* o = NEW(JointSet, n);
@@ -107,11 +109,6 @@ void JointSet_do_odometry(JointSet* o) //
                 o->joint[j].pos_fbk_from_motors += Sjm[j][m] * o->motor[m].pos_fbk;
                 o->joint[j].vel_fbk_from_motors += Sjm[j][m] * o->motor[m].vel_fbk;
             }
-        
-            if (AbsEncoder_is_fake(o->absEncoder+j))
-            {
-                o->joint[j].pos_fbk_from_motors += o->absEncoder[j].offset;
-            }
         }
     }
     else
@@ -122,11 +119,6 @@ void JointSet_do_odometry(JointSet* o) //
             
             o->joint[j].pos_fbk_from_motors = o->motor[j].pos_fbk;
             o->joint[j].vel_fbk_from_motors = o->motor[j].vel_fbk;
-            
-            if (AbsEncoder_is_fake(o->absEncoder+j))
-            {
-                o->joint[j].pos_fbk_from_motors += o->absEncoder[j].offset;
-            }
         }
     }
     
@@ -138,12 +130,13 @@ void JointSet_do_odometry(JointSet* o) //
         
             if (AbsEncoder_is_fake(o->absEncoder+j))
             {
-                o->joint[j].pos_fbk = o->joint[j].pos_fbk_from_motors + o->absEncoder[j].offset;
+                o->joint[j].pos_fbk = o->joint[j].pos_fbk_from_motors;
                 o->joint[j].vel_fbk = o->joint[j].vel_fbk_from_motors;
             }
             else
             {
                 o->joint[j].pos_fbk = AbsEncoder_position(o->absEncoder+j);
+                
                 #ifdef USE_SPEED_FBK_FROM_MOTORS
                 o->joint[j].vel_fbk = o->joint[j].vel_fbk_from_motors;
                 #else
@@ -168,7 +161,7 @@ void JointSet_do_odometry(JointSet* o) //
         
             if (AbsEncoder_is_fake(o->absEncoder+e))
             {
-                pos[e] = o->joint[e].pos_fbk_from_motors + o->absEncoder[e].offset;
+                pos[e] = o->joint[e].pos_fbk_from_motors;
                 vel[e] = o->joint[e].vel_fbk_from_motors;
             }
             else
@@ -259,7 +252,7 @@ static void JointSet_do_wait_calibration(JointSet* o);
 void JointSet_do(JointSet* o)
 {
     if (o->is_calibrated)
-    {
+    {            
         JointSet_do_odometry(o);
     
         JointSet_do_check_faults(o);
@@ -269,6 +262,13 @@ void JointSet_do(JointSet* o)
     else
     {
         JointSet_do_wait_calibration(o);
+        
+        for (int ms=0; ms<*(o->pN); ++ms)
+        {
+            int m = o->motors_of_set[ms];
+            
+            o->motor[m].output = 0;
+        }
     }
 }
 
@@ -313,32 +313,35 @@ BOOL JointSet_set_control_mode(JointSet* o, eOmc_controlmode_command_t control_m
     case eomc_controlmode_cmd_idle:
         for (int k=0; k<N; ++k)
         { 
-            Motor_set_idle(o->motor+o->motors_of_set[k]);
-            
             Motor_motion_reset(o->motor+o->motors_of_set[k]);
             Joint_motion_reset(o->joint+o->joints_of_set[k]);
+            
+            Motor_set_idle(o->motor+o->motors_of_set[k]);
+            Joint_set_control_mode(o->joint+o->joints_of_set[k], control_mode);
         }
         break;
     
     case eomc_controlmode_cmd_openloop:
         for (int k=0; k<N; ++k)
         { 
-            Motor_set_run(o->motor+o->motors_of_set[k]);
-            
             Motor_motion_reset(o->motor+o->motors_of_set[k]);
             Joint_motion_reset(o->joint+o->joints_of_set[k]);
+            
+            Motor_set_run(o->motor+o->motors_of_set[k]);
+            Joint_set_control_mode(o->joint+o->joints_of_set[k], control_mode);
         }
         break;
         
     case eomc_controlmode_cmd_torque:
         for (int k=0; k<N; ++k)
         { 
-            Motor_set_run(o->motor+o->motors_of_set[k]);
-            
             Motor_motion_reset(o->motor+o->motors_of_set[k]);
             Joint_motion_reset(o->joint+o->joints_of_set[k]);
             //Motor_trq_ctrl_turn_on(o->motor+o->motors_of_set[k]);
             //Joint_trq_ctrl_turn_on(o->joint+o->joints_of_set[k]);
+            
+            Motor_set_run(o->motor+o->motors_of_set[k]);
+            Joint_set_control_mode(o->joint+o->joints_of_set[k], control_mode);
         }    
         break;
     
@@ -348,17 +351,17 @@ BOOL JointSet_set_control_mode(JointSet* o, eOmc_controlmode_command_t control_m
     case eomc_controlmode_cmd_velocity:
         for (int k=0; k<N; ++k)
         { 
-            Motor_set_run(o->motor+o->motors_of_set[k]);
-            
             Motor_motion_reset(o->motor+o->motors_of_set[k]);
             Joint_motion_reset(o->joint+o->joints_of_set[k]);
+            
+            Motor_set_run(o->motor+o->motors_of_set[k]);
+            Joint_set_control_mode(o->joint+o->joints_of_set[k], control_mode);
         }
         break;
         
     default:
         return FALSE;
     }
-    
     
     o->control_mode = (eOmc_controlmode_t)control_mode;
     
@@ -375,15 +378,20 @@ void JointSet_set_interaction_mode(JointSet* o, eOmc_interactionmode_t interacti
     
     JointSet_set_inner_control_flags(o);
     
-    if (interaction_mode == eOmc_interactionmode_stiff)
-    {    
-        int N = *(o->pN);
+    int N = *(o->pN);
     
+    if (interaction_mode == eOmc_interactionmode_stiff)
+    {        
         for (int k=0; k<N; ++k)
         {
             Motor_motion_reset(o->motor+o->motors_of_set[k]);
             Joint_motion_reset(o->joint+o->joints_of_set[k]);
         }
+    }
+    
+    for (int k=0; k<N; ++k)
+    {
+        Joint_set_interaction_mode(o->joint+o->joints_of_set[k], interaction_mode);
     }
 }
 
@@ -512,7 +520,10 @@ static void JointSet_do_vel_control(JointSet* o)
         int m = o->motors_of_set[ms];
     
         CTRL_UNITS motor_vel_ref = ZERO;
-            
+        
+        motor_vel_ref = o->joint[m].output;
+        
+        /*
         for (int js=0; js<N; ++js)
         {
             int j = o->joints_of_set[js];
@@ -520,7 +531,8 @@ static void JointSet_do_vel_control(JointSet* o)
             // inverse Jacobian
             motor_vel_ref += Ji[m][j]*o->joint[j].output;
         }
-
+        */
+        
         Motor_set_vel_ref(o->motor+m, motor_vel_ref);
     }
 }
@@ -534,11 +546,11 @@ static void JointSet_do_wait_calibration(JointSet* o)
         int m = o->motors_of_set[ms];
         
         if (!Motor_is_calibrated(o->motor+m))
-        {
+        {         
             return;
         }
     }
-
+    
     for (int es=0; es<N; ++es)
     {
         if (!AbsEncoder_is_calibrated(o->absEncoder+o->encoders_of_set[es]))
@@ -547,7 +559,21 @@ static void JointSet_do_wait_calibration(JointSet* o)
         }
     }
     
+    //if (o->control_mode == eomc_controlmode_calib)
+    {
+        for (int js=0; js<*(o->pN); ++js)
+        {
+            int j = o->joints_of_set[js];
+            
+            o->joint[j].control_mode = eomc_controlmode_idle;
+        }
+    }
+    
+    o->control_mode = eomc_controlmode_idle;
+    
     o->is_calibrated = TRUE;
+    
+    JointSet_set_control_mode(o, eomc_controlmode_cmd_idle);
 }
 
 static void JointSet_set_inner_control_flags(JointSet* o)
@@ -606,15 +632,33 @@ void JointSet_calibrate(JointSet* o, uint8_t e, eOmc_calibrator_t *calibrator)
 {
     switch (calibrator->type)
     {
+        /*
         case eomc_calibration_type3_abs_sens_digital:
             AbsEncoder_calibrate(o->absEncoder+e, calibrator->params.type3.calibrationZero);
+            Motor_config_pos_offset(o->motor+e, 0);
             break;
         
         case eomc_calibration_type9_motor_self_calibrated:
+            AbsEncoder_calibrate(o->absEncoder+e, 0);
             Motor_config_pos_offset(o->motor+e, calibrator->params.type9.calibrationZero);
+            break;
+        */
+        
+        case eomc_calibration_type3_abs_sens_digital:
+            AbsEncoder_calibrate(o->absEncoder+e, 0);
+            Motor_calibrate(o->motor+e, calibrator->params.type3.calibrationZero);
             break;
         
         default:
             break;
     }
+    
+    for (int js=0; js<*(o->pN); ++js)
+    {
+        int j = o->joints_of_set[js];
+        
+        o->joint[j].control_mode = eomc_controlmode_calib;
+    }
+    
+    o->control_mode = eomc_controlmode_calib;
 }

@@ -154,7 +154,7 @@ typedef struct //Motor
     CTRL_UNITS trq_fbk;
     CTRL_UNITS trq_err;
     
-    int16_t output;
+    int32_t output;
     
     PID trqPID;
     
@@ -185,7 +185,7 @@ extern void Motor_destroy(Motor* o); //
 extern void Motor_config_trqPID(Motor* o, eOmc_PID_t* pid); //
 extern void Motor_config_filter(Motor* o, uint8_t filter); //
 extern void Motor_config_friction(Motor* o, float Bemf, float Ktau); //
-extern void Motor_config_pos_offset(Motor* o, int32_t offset); //
+extern void Motor_calibrate(Motor* o, int32_t offset); //
 
 extern void Motor_set_run(Motor* o); //
 extern void Motor_set_idle(Motor* o); //

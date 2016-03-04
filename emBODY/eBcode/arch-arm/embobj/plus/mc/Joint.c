@@ -395,6 +395,8 @@ CTRL_UNITS Joint_do_pwm_control(Joint* o)
     return o->output;
 }
 
+#include "hal_led.h"
+
 CTRL_UNITS Joint_do_vel_control(Joint* o)
 {
     o->pushing_limit = FALSE;
@@ -470,6 +472,13 @@ CTRL_UNITS Joint_do_vel_control(Joint* o)
                         o->vel_ref += o->scKpos*o->pos_err;
                     }
                 }
+                
+                static int n = 0;
+                if (++n > 1000)
+                {
+                    n = 0;
+                    hal_led_toggle(hal_led1);
+                } 
                 
                 o->output = o->vel_ref;
             }
