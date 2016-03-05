@@ -431,8 +431,10 @@ void Motor_set_Iqq_ref(Motor* o, int32_t Iqq_ref)
 
 void Motor_set_vel_ref(Motor* o, int32_t vel_ref) 
 {
-    o->vel_ref = vel_ref;
-    //o->vel_ref = CUT(vel_ref, o->vel_max);
+    //o->vel_ref = vel_ref;
+    
+    o->vel_ref = CUT(vel_ref, o->vel_max);
+    
     o->output = (o->vel_ref * o->GEARBOX)/1000;
 }
 

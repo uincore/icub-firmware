@@ -416,42 +416,53 @@ static void JointSet_do_pwm_control(JointSet* o)
         }
     }
     
-    CTRL_UNITS motor_pwm_ref;
-    
-    float **J  = o->Jjm; // direct Jacobian
-    float **Ji = o->Jmj; // inverse Jacobian
+    CTRL_UNITS motor_pwm_ref = ZERO;
     
     for (int ms=0; ms<N; ++ms)
     {
         int m = o->motors_of_set[ms];
     
         if (o->trq_control_active)
-        {         
-            CTRL_UNITS motor_trq_ref = ZERO;
-            CTRL_UNITS motor_trq_fbk = ZERO;
-            
-            for (int js=0; js<N; ++js)
+        {   
+            if (o->Jjm)
             {
-                int j = o->joints_of_set[js];
+                CTRL_UNITS motor_trq_ref = ZERO;
+                CTRL_UNITS motor_trq_fbk = ZERO;
+            
+                for (int js=0; js<N; ++js)
+                {
+                    int j = o->joints_of_set[js];
                 
-                // mu = Jt Tau 
-                // transposed direct Jacobian
-                motor_trq_ref += J[j][m]*o->joint[j].trq_ref;
-                motor_trq_fbk += J[j][m]*o->joint[j].trq_fbk;
+                    // mu = Jt Tau 
+                    // transposed direct Jacobian
+                    motor_trq_ref += o->Jjm[j][m]*o->joint[j].trq_ref;
+                    motor_trq_fbk += o->Jjm[j][m]*o->joint[j].trq_fbk;
+                }
+                
+                motor_pwm_ref = Motor_do_trq_control(o->motor+m, motor_trq_ref, motor_trq_fbk);
             }
-                
-            motor_pwm_ref = Motor_do_trq_control(o->motor+m, motor_trq_ref, motor_trq_fbk);
+            else
+            {
+                motor_pwm_ref = Motor_do_trq_control(o->motor+m, o->joint[m].trq_ref, o->joint[m].trq_fbk);
+            }
         }
         else
         {
-            motor_pwm_ref = ZERO;
-            
-            for (int js=0; js<N; ++js)
+            if (o->Jmj)
             {
-                int j = o->joints_of_set[js];
+                motor_pwm_ref = ZERO;
+            
+                for (int js=0; js<N; ++js)
+                {
+                    int j = o->joints_of_set[js];
                 
-                // inverse Jacobian
-                motor_pwm_ref += Ji[m][j]*o->joint[j].output;
+                    // inverse Jacobian
+                    motor_pwm_ref += o->Jmj[m][j]*o->joint[j].output;
+                }
+            }
+            else
+            {
+                motor_pwm_ref = o->joint[m].output;
             }
         }
 
@@ -466,14 +477,21 @@ static void JointSet_do_pwm_control(JointSet* o)
         {
             int j = o->joints_of_set[js];
             
-            joint_pwm_ref[j] = ZERO;
-            
-            for (int ms=0; ms<N; ++ms)
+            if (o->Jmj)
             {
-                int m = o->motors_of_set[ms];
+                joint_pwm_ref[j] = ZERO;
+            
+                for (int ms=0; ms<N; ++ms)
+                {
+                    int m = o->motors_of_set[ms];
                 
-                // transposed inverse Jacobian
-                joint_pwm_ref[j] += Ji[m][j]*o->motor[m].pwm_ref;
+                    // transposed inverse Jacobian
+                    joint_pwm_ref[j] += o->Jmj[m][j]*o->motor[m].pwm_ref;
+                }
+            }
+            else
+            {
+                joint_pwm_ref[j] = o->motor[j].pwm_ref;
             }
             
             if (Joint_pushing_limit(o->joint+j))
@@ -489,17 +507,24 @@ static void JointSet_do_pwm_control(JointSet* o)
         {
             int m = o->motors_of_set[ms];
         
-            CTRL_UNITS motor_pwm_ref = ZERO;
-            
-            for (int js=0; js<N; ++js)
+            if (o->Jjm)
             {
-                int j = o->joints_of_set[js];
-                
-                // transposed direct Jacobian
-                motor_pwm_ref += J[j][m]*joint_pwm_ref[j];
-            }
+                motor_pwm_ref = ZERO;
             
-            Motor_set_pwm_ref(o->motor+m, motor_pwm_ref);
+                for (int js=0; js<N; ++js)
+                {
+                    int j = o->joints_of_set[js];
+                
+                    // transposed jacobian
+                    motor_pwm_ref += o->Jjm[j][m]*joint_pwm_ref[j];
+                }
+            
+                Motor_set_pwm_ref(o->motor+m, motor_pwm_ref);
+            }
+            else
+            {
+                Motor_set_pwm_ref(o->motor+m, joint_pwm_ref[m]);
+            }
         }
     }
 }
@@ -513,27 +538,29 @@ static void JointSet_do_vel_control(JointSet* o)
         Joint_do_vel_control(o->joint+o->joints_of_set[js]);
     }
     
-    float **Ji = o->Jmj; // inverse Jacobian
-    
     for (int ms=0; ms<N; ++ms)
     {
         int m = o->motors_of_set[ms];
     
-        CTRL_UNITS motor_vel_ref = ZERO;
-        
-        motor_vel_ref = o->joint[m].output;
-        
-        /*
-        for (int js=0; js<N; ++js)
+        if (o->Jmj)
         {
-            int j = o->joints_of_set[js];
-                
-            // inverse Jacobian
-            motor_vel_ref += Ji[m][j]*o->joint[j].output;
-        }
-        */
+            float **Ji = o->Jmj; // inverse Jacobian
+            
+            CTRL_UNITS motor_vel_ref = ZERO;
         
-        Motor_set_vel_ref(o->motor+m, motor_vel_ref);
+            for (int js=0; js<N; ++js)
+            {
+                int j = o->joints_of_set[js];
+                
+                motor_vel_ref += Ji[m][j]*o->joint[j].output;
+            }
+        
+            Motor_set_vel_ref(o->motor+m, motor_vel_ref);
+        }
+        else
+        {
+            Motor_set_vel_ref(o->motor+m, o->joint[m].output);
+        }
     }
 }
 
@@ -543,37 +570,27 @@ static void JointSet_do_wait_calibration(JointSet* o)
     
     for (int ms=0; ms<N; ++ms)
     {
-        int m = o->motors_of_set[ms];
-        
-        if (!Motor_is_calibrated(o->motor+m))
-        {         
-            return;
-        }
+        if (!Motor_is_calibrated(o->motor+o->motors_of_set[ms])) return;
     }
     
     for (int es=0; es<N; ++es)
     {
-        if (!AbsEncoder_is_calibrated(o->absEncoder+o->encoders_of_set[es]))
-        {
-            return;
-        }
+        if (!AbsEncoder_is_calibrated(o->absEncoder+o->encoders_of_set[es])) return;
     }
+    
+    o->is_calibrated = TRUE;
     
     //if (o->control_mode == eomc_controlmode_calib)
     {
-        for (int js=0; js<*(o->pN); ++js)
+        for (int js=0; js<N; ++js)
         {
-            int j = o->joints_of_set[js];
-            
-            o->joint[j].control_mode = eomc_controlmode_idle;
+            o->joint[o->joints_of_set[js]].control_mode = eomc_controlmode_idle;
         }
     }
     
     o->control_mode = eomc_controlmode_idle;
     
-    o->is_calibrated = TRUE;
-    
-    JointSet_set_control_mode(o, eomc_controlmode_cmd_idle);
+    JointSet_set_control_mode(o, eomc_controlmode_cmd_position);
 }
 
 static void JointSet_set_inner_control_flags(JointSet* o)
@@ -655,9 +672,7 @@ void JointSet_calibrate(JointSet* o, uint8_t e, eOmc_calibrator_t *calibrator)
     
     for (int js=0; js<*(o->pN); ++js)
     {
-        int j = o->joints_of_set[js];
-        
-        o->joint[j].control_mode = eomc_controlmode_calib;
+        o->joint[o->joints_of_set[js]].control_mode = eomc_controlmode_calib;
     }
     
     o->control_mode = eomc_controlmode_calib;

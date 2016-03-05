@@ -2,6 +2,8 @@
 
 #include "EOtheCANprotocol.h"
 
+static void Joint_set_inner_control_flags(Joint* o);
+
 Joint* Joint_new(uint8_t n)
 {
     Joint* o = NEW(Joint, n);
@@ -188,6 +190,8 @@ BOOL Joint_set_control_mode(Joint* o, eOmc_controlmode_command_t control_mode)
     
     o->control_mode = (eOmc_controlmode_t)control_mode;
     
+    Joint_set_inner_control_flags(o);
+    
     Joint_motion_reset(o);
     
     return TRUE;
@@ -206,6 +210,8 @@ BOOL Joint_set_interaction_mode(Joint* o, eOmc_interactionmode_t interaction_mod
     }
     
     o->interaction_mode = interaction_mode;
+    
+    Joint_set_inner_control_flags(o);
     
     if (interaction_mode == eOmc_interactionmode_stiff)
     {
@@ -687,3 +693,31 @@ void Joint_stop(Joint* o)
     Trajectory_stop(&o->trajectory, o->pos_fbk);
 }
 
+static void Joint_set_inner_control_flags(Joint* o)
+{
+    switch (o->control_mode)
+    {
+        case eomc_controlmode_position:
+        case eomc_controlmode_velocity:
+        case eomc_controlmode_mixed:
+        case eomc_controlmode_direct:
+            o->pos_control_active = TRUE;
+        break;
+        
+        default:
+            o->pos_control_active = FALSE;
+    }
+    
+    if (o->control_mode==eomc_controlmode_torque)
+    {
+        o->trq_control_active = TRUE;
+    }
+    else if (o->pos_control_active && (o->interaction_mode==eOmc_interactionmode_compliant))
+    {
+        o->trq_control_active = TRUE;
+    }
+    else
+    {
+        o->trq_control_active = FALSE;
+    }
+}
