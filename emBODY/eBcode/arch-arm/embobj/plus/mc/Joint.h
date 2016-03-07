@@ -81,6 +81,9 @@ typedef struct // Joint
     BOOL trq_control_active;
     BOOL CAN_DO_TRQ_CTRL;
     
+    
+    
+    JointFaultState fault_state_prec;
     JointFaultState fault_state;
     uint16_t diagnostics_refresh;
 } Joint;

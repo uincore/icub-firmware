@@ -85,6 +85,7 @@ void Joint_init(Joint* o)
     
     o->pushing_limit = FALSE;
     
+    o->fault_state_prec.bitmask = 0;
     o->fault_state.bitmask = 0;
     o->diagnostics_refresh = 0;
     
@@ -246,14 +247,6 @@ void Joint_update_torque_fbk(Joint* o, CTRL_UNITS trq_fbk)
 
 BOOL Joint_check_faults(Joint* o)
 {
-    BOOL fault = FALSE; 
-    
-    if (++o->diagnostics_refresh > 5*CTRL_LOOP_FREQUENCY_INT)
-    {
-        o->diagnostics_refresh = 0;
-        o->fault_state.bitmask = 0;
-    }
-    
     if (WatchDog_check_expired(&o->trq_fbk_wdog))
     {
         o->trq_fbk = ZERO;
@@ -262,30 +255,42 @@ BOOL Joint_check_faults(Joint* o)
         
         if (o->trq_control_active)
         {
-            if (!o->fault_state.bits.torque_sensor_timeout)
-            {
-                o->fault_state.bits.torque_sensor_timeout = TRUE;
-                
-                static eOerrmanDescriptor_t descriptor = {0};
-                descriptor.par16 = o->ID;
-                descriptor.par64 = 0;
-                descriptor.sourcedevice = eo_errman_sourcedevice_localboard;
-                descriptor.sourceaddress = 0;
-                descriptor.code = eoerror_code_get(eoerror_category_MotionControl, eoerror_value_MC_axis_torque_sens);
-                eo_errman_Error(eo_errman_GetHandle(), eo_errortype_error, NULL, NULL, &descriptor);
-            }
-        
-            o->control_mode = eomc_controlmode_hwFault;
+            o->fault_state.bits.torque_sensor_timeout = TRUE;
             
-            fault = TRUE;
+            o->control_mode = eomc_controlmode_hwFault;
         }
     }
     
-    return fault;
+    if (o->control_mode != eomc_controlmode_hwFault) return FALSE;
+
+    if (++o->diagnostics_refresh > 5*CTRL_LOOP_FREQUENCY_INT)
+    {
+        o->diagnostics_refresh = 0;
+        o->fault_state.bitmask = 0;
+    }
+        
+    if (o->fault_state.bitmask != o->fault_state_prec.bitmask)
+    {        
+        if (o->fault_state.bits.torque_sensor_timeout && !o->fault_state_prec.bits.torque_sensor_timeout)
+        {   
+            static eOerrmanDescriptor_t descriptor = {0};
+            descriptor.par16 = o->ID;
+            descriptor.par64 = 0;
+            descriptor.sourcedevice = eo_errman_sourcedevice_localboard;
+            descriptor.sourceaddress = 0;
+            descriptor.code = eoerror_code_get(eoerror_category_MotionControl, eoerror_value_MC_axis_torque_sens);
+            eo_errman_Error(eo_errman_GetHandle(), eo_errortype_error, NULL, NULL, &descriptor);
+        }
+        
+        o->fault_state_prec.bitmask = o->fault_state.bitmask;
+    }
+    
+    return TRUE;
 }
- 
+
 extern void Joint_clear_faults(Joint* o)
 {
+    o->fault_state_prec.bitmask = 0;
     o->fault_state.bitmask = 0;
 }
 

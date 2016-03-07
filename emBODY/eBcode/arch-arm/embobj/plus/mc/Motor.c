@@ -2,20 +2,16 @@
 //#include <string.h>
 
 #include "EoCommon.h"
-
 #include "iCubCanProto_types.h"
-
 #include "EoProtocol.h"
-
 #include "EOtheCANprotocol.h"
-
 #include "EOtheCANservice.h"
-
 #include "hal_motor.h"
-
 #include "Motor.h"
-
 #include "hal_led.h"
+
+#include "EOtheErrorManager.h"
+#include "EoError.h"
 
 /////////////////////////////////////////////////////////
 // Motor
@@ -122,6 +118,13 @@ void Motor_init(Motor* o) //
     o->control_mode           = icubCanProto_controlmode_notConfigured;
     o->control_mode_req       = icubCanProto_controlmode_notConfigured;
 
+    o->can_dead = FALSE;
+    o->wrong_ctrl_mode = FALSE;
+    
+    o->fault_state_prec.bitmask = 0;
+    o->fault_state.bitmask = 0;
+    o->diagnostics_refresh = 0;
+    
     WatchDog_init(&o->control_mode_req_wdog);
     WatchDog_init(&o->can_2FOC_alive_wdog);
 }
@@ -260,8 +263,25 @@ void Motor_force_idle(Motor* o) //
         o->control_mode = icubCanProto_controlmode_idle;
     }
     
+    o->can_dead = FALSE;
+    o->wrong_ctrl_mode = FALSE;
+    
+    o->fault_state_prec.bitmask = 0;
     o->fault_state.bitmask = 0;
+    o->diagnostics_refresh = 0;
+    
     o->hardware_fault = FALSE;
+}
+
+static void Motor_send_error(uint8_t id, eOerror_value_MC_t err_id, uint64_t mask)
+{
+    static eOerrmanDescriptor_t descriptor = {0};
+    descriptor.par16 = id;
+    descriptor.par64 = mask;
+    descriptor.sourcedevice = eo_errman_sourcedevice_localboard;
+    descriptor.sourceaddress = 0;
+    descriptor.code = eoerror_code_get(eoerror_category_MotionControl, err_id);
+    eo_errman_Error(eo_errman_GetHandle(), eo_errortype_error, NULL, NULL, &descriptor);    
 }
 
 BOOL Motor_check_faults(Motor* o) //
@@ -271,11 +291,14 @@ BOOL Motor_check_faults(Motor* o) //
         o->hardware_fault = TRUE;
     }
     
+    BOOL can_dead        = FALSE;
+    BOOL wrong_ctrl_mode = FALSE;
+    
     if (o->HARDWARE_TYPE == HARDWARE_2FOC)
     {
         if (WatchDog_check_expired(&o->can_2FOC_alive_wdog))
         {
-            // TODOALE add can dead fault flag
+            can_dead = TRUE;
             o->hardware_fault = TRUE;
         }
         
@@ -287,7 +310,7 @@ BOOL Motor_check_faults(Motor* o) //
                 {
                     if (WatchDog_check_expired(&o->control_mode_req_wdog))
                     {
-                        // TODOALE add wrong control mode fault flag 
+                        wrong_ctrl_mode = TRUE;
                         o->hardware_fault = TRUE;
                     }
                 }
@@ -295,7 +318,7 @@ BOOL Motor_check_faults(Motor* o) //
         }
     }
     
-    if (o->HARDWARE_TYPE == HARDWARE_2FOC)
+    if (o->HARDWARE_TYPE == HARDWARE_MC4p)
     {
         if (o->hardware_fault || hal_motor_externalfaulted())
         {
@@ -303,7 +326,101 @@ BOOL Motor_check_faults(Motor* o) //
         }
     }
     
-    return o->hardware_fault;
+    if (!o->hardware_fault)
+    {
+        o->fault_state_prec.bitmask = 0;
+        o->wrong_ctrl_mode = FALSE;
+        o->can_dead = FALSE;
+        
+        return FALSE;
+    }
+    
+    if (++o->diagnostics_refresh > 5*CTRL_LOOP_FREQUENCY_INT)
+    {
+        o->diagnostics_refresh = 0;
+        o->fault_state_prec.bitmask = 0;
+    }
+    
+    if (o->fault_state_prec.bitmask != o->fault_state.bitmask)
+    {
+        MotorFaultState fault_state;
+        fault_state.bitmask = o->fault_state.bitmask;
+        
+        if (o->fault_state.bits.OverCurrentFailure && !o->fault_state_prec.bits.OverCurrentFailure)
+        {
+            Motor_send_error(o->ID, eoerror_value_MC_motor_overcurrent, 0);
+            fault_state.bits.OverCurrentFailure = FALSE;
+        }
+        
+        if (o->fault_state.bits.I2TFailure && !o->fault_state_prec.bits.I2TFailure)
+        {
+            Motor_send_error(o->ID, eoerror_value_MC_motor_i2t_limit, 0);
+            fault_state.bits.I2TFailure = FALSE;
+        }
+        
+        if ((o->fault_state.bits.DHESInvalidSequence && !o->fault_state_prec.bits.DHESInvalidSequence)
+         || (o->fault_state.bits.DHESInvalidValue && !o->fault_state_prec.bits.DHESInvalidValue))
+        {
+            Motor_send_error(o->ID, eoerror_value_MC_motor_hallsensors, 0);
+            fault_state.bits.DHESInvalidSequence = FALSE;
+            fault_state.bits.DHESInvalidValue = FALSE;
+        }
+        
+        if (o->fault_state.bits.CANInvalidProtocol && !o->fault_state_prec.bits.CANInvalidProtocol)
+        {
+            Motor_send_error(o->ID, eoerror_value_MC_motor_can_invalid_prot, 0);
+            fault_state.bits.CANInvalidProtocol = FALSE;
+        }
+        
+        #define CAN_GENERIC_ERROR 0x00003D00
+        
+        if ((o->fault_state.bitmask & CAN_GENERIC_ERROR) && ((o->fault_state.bitmask & CAN_GENERIC_ERROR) != (o->fault_state_prec.bitmask & CAN_GENERIC_ERROR)))
+        {
+            Motor_send_error(o->ID, eoerror_value_MC_motor_can_generic, (o->fault_state.bitmask & CAN_GENERIC_ERROR));
+            fault_state.bitmask &= ~CAN_GENERIC_ERROR;
+        }
+                
+        if (o->fault_state.bits.EncoderFault & !o->fault_state_prec.bits.EncoderFault)
+        {
+            if (o->qe_state.bits.dirty)
+            {
+                Motor_send_error(o->ID, eoerror_value_MC_motor_qencoder_dirty, 0);
+            }
+        
+            if (o->qe_state.bits.index_broken)
+            {
+                Motor_send_error(o->ID, eoerror_value_MC_motor_qencoder_index, 0);
+            }
+
+            if (o->qe_state.bits.phase_broken)
+            {
+                Motor_send_error(o->ID, eoerror_value_MC_motor_qencoder_phase, 0);
+            }
+            
+            fault_state.bits.EncoderFault = FALSE;
+        }
+    
+        if (can_dead && !o->can_dead)
+        {
+            Motor_send_error(o->ID, eoerror_value_MC_motor_can_no_answer, 0);
+        }
+        
+        if (wrong_ctrl_mode && !o->wrong_ctrl_mode)
+        {
+            Motor_send_error(o->ID, eoerror_value_MC_motor_wrong_state, 0);
+        }
+        
+        if (fault_state.bitmask)
+        {
+            Motor_send_error(o->ID, eoerror_value_MC_generic_error, fault_state.bitmask);
+        }
+    }
+    
+    o->fault_state_prec.bitmask = o->fault_state.bitmask;
+    o->wrong_ctrl_mode = wrong_ctrl_mode;
+    o->can_dead = can_dead;
+    
+    return TRUE;
 }
 
 void Motor_raise_fault_overcurrent(Motor* o)

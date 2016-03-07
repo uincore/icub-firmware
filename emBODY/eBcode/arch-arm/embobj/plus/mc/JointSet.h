@@ -43,6 +43,8 @@ typedef struct // JointSet
     uint8_t MOTOR_CONTROL_TYPE;
     
     BOOL is_calibrated;
+    
+    BOOL external_fault;
 } JointSet;
 
 extern JointSet* JointSet_new(uint8_t n); //

@@ -201,6 +201,7 @@ BOOL JointSet_do_check_faults(JointSet* o)
     int N = *(o->pN);
     
     BOOL fault = FALSE;
+    o->external_fault = FALSE;
     
     for (int k=0; k<N; ++k)
     {
@@ -216,6 +217,11 @@ BOOL JointSet_do_check_faults(JointSet* o)
             // TODOALE
             // traditional confusion among joints, motors and encoders: I don't like it
             o->joint[o->joints_of_set[k]].control_mode = eomc_controlmode_hwFault;
+        }
+        
+        if (Motor_is_external_fault(o->motor+o->motors_of_set[k]))
+        {
+            o->external_fault = TRUE;
         }
         
         if (AbsEncoder_is_in_fault(o->absEncoder+o->encoders_of_set[k]))
@@ -238,6 +244,17 @@ BOOL JointSet_do_check_faults(JointSet* o)
         }
         
         o->control_mode = eomc_controlmode_hwFault;
+    }
+    else if (o->external_fault)
+    {
+        for (int k=0; k<N; ++k)
+        {
+            Joint_set_control_mode(o->joint+o->joints_of_set[k], eomc_controlmode_cmd_idle);
+            
+            Motor_set_idle(o->motor+o->motors_of_set[k]);
+        }
+        
+        o->control_mode = eomc_controlmode_idle;    
     }
     
     return fault;
@@ -339,6 +356,7 @@ BOOL JointSet_set_control_mode(JointSet* o, eOmc_controlmode_command_t control_m
         break;
     
     case eomc_controlmode_cmd_openloop:
+        if (o->external_fault) return FALSE;
         for (int k=0; k<N; ++k)
         { 
             Motor_motion_reset(o->motor+o->motors_of_set[k]);
@@ -350,6 +368,7 @@ BOOL JointSet_set_control_mode(JointSet* o, eOmc_controlmode_command_t control_m
         break;
         
     case eomc_controlmode_cmd_torque:
+        if (o->external_fault) return FALSE;
         for (int k=0; k<N; ++k)
         { 
             Motor_motion_reset(o->motor+o->motors_of_set[k]);
@@ -364,6 +383,7 @@ BOOL JointSet_set_control_mode(JointSet* o, eOmc_controlmode_command_t control_m
     case eomc_controlmode_cmd_mixed:
     case eomc_controlmode_cmd_position:
     case eomc_controlmode_cmd_velocity:
+        if (o->external_fault) return FALSE;
         for (int k=0; k<N; ++k)
         { 
             Motor_motion_reset(o->motor+o->motors_of_set[k]);

@@ -57,6 +57,7 @@ void AbsEncoder_init(AbsEncoder* o)
     
     o->spike_cnt = 0;
     
+    o->fault_state_prec.bitmask = 0;
     o->fault_state.bitmask = 0;
     o->diagnostics_refresh = 0;
     
@@ -316,38 +317,57 @@ BOOL AbsEncoder_is_calibrated(AbsEncoder* o)
     return !o->state.bits.not_calibrated;
 }
 
+static void AbsEncoder_send_error(uint8_t id, eOerror_value_MC_t err_id, uint64_t mask)
+{
+    static eOerrmanDescriptor_t descriptor = {0};
+    descriptor.par16 = id;
+    descriptor.par64 = mask;
+    descriptor.sourcedevice = eo_errman_sourcedevice_localboard;
+    descriptor.sourceaddress = 0;
+    descriptor.code = eoerror_code_get(eoerror_category_MotionControl, err_id);
+    eo_errman_Error(eo_errman_GetHandle(), eo_errortype_error, NULL, NULL, &descriptor);    
+}
+
 BOOL AbsEncoder_is_in_fault(AbsEncoder* o)
 {
+    if (!o->hardware_fault) return FALSE;
+    
     if (++o->diagnostics_refresh > 5*CTRL_LOOP_FREQUENCY_INT)
     {
         o->diagnostics_refresh = 0;
-        o->fault_state.bitmask = 0;
+        o->fault_state_prec.bitmask = 0;
     }
     
-    if (o->hardware_fault)
-    {
-        uint8_t tx_error      :1;
-        uint8_t data_error    :1;
-        uint8_t data_notready :1;
-        uint8_t chip_error    :1;    
-        uint8_t spikes        :1;
+    if (o->fault_state_prec.bitmask != o->fault_state.bitmask)
+    {     
+        if ((o->fault_state.bits.tx_error   && !o->fault_state_prec.bits.tx_error)  
+         || (o->fault_state.bits.data_error && !o->fault_state_prec.bits.data_error) 
+         || (o->fault_state.bits.chip_error && !o->fault_state_prec.bits.chip_error))
+        {
+            AbsEncoder_send_error(o->ID, eoerror_value_MC_aea_abs_enc_invalid, o->fault_state.bitmask);
+        }
         
-        static eOerrmanDescriptor_t descriptor = {0};
-        descriptor.par16 = o->ID;
-        descriptor.par64 = 0;
-        descriptor.sourcedevice = eo_errman_sourcedevice_localboard;
-        descriptor.sourceaddress = 0;
-        descriptor.code = eoerror_code_get(eoerror_category_MotionControl, eoerror_value_MC_axis_torque_sens);
-        eo_errman_Error(eo_errman_GetHandle(), eo_errortype_error, NULL, NULL, &descriptor);
+        if (o->fault_state.bits.data_notready)
+        {
+            AbsEncoder_send_error(o->ID, eoerror_value_MC_aea_abs_enc_timeout, 0);
+        }
+        
+        if (o->fault_state.bits.spikes)
+        {
+            AbsEncoder_send_error(o->ID, eoerror_value_MC_aea_abs_enc_spikes, 0);
+        }
+        
+        o->fault_state_prec.bitmask = o->fault_state.bitmask;
     }
     
-    return o->hardware_fault;
+    return TRUE;
 }
 
 void AbsEncoder_clear_faults(AbsEncoder* o)
 {
     o->hardware_fault = FALSE;
     
+    o->fault_state_prec.bitmask = 0;
     o->fault_state.bitmask = 0;
     
     o->invalid_cnt = 0;

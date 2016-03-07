@@ -67,7 +67,7 @@ typedef union
         
     uint32_t bitmask;
         
-} FaultState;
+} MotorFaultState;
 
 typedef union
 {
@@ -161,8 +161,13 @@ typedef struct //Motor
     BOOL not_calibrated;
     BOOL hardware_fault;
     
-    FaultState fault_state;
-    QEState    qe_state;
+    BOOL can_dead;
+    BOOL wrong_ctrl_mode;
+    
+    uint16_t diagnostics_refresh;
+    MotorFaultState fault_state_prec;
+    MotorFaultState fault_state;
+    QEState qe_state;
     
     icubCanProto_controlmode_t  control_mode;
     icubCanProto_controlmode_t  control_mode_req;
