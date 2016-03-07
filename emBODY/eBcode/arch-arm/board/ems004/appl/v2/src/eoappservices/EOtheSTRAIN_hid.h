@@ -39,6 +39,7 @@
 
 // - definition of the hidden struct implementing the object ----------------------------------------------------------
 
+enum { strain_maxRegulars = 2 }; // there cannot be more than 1 strain, and typically not more than 1 signalled variable.
 
 struct EOtheSTRAIN_hid
 {
@@ -49,6 +50,7 @@ struct EOtheSTRAIN_hid
     eOprotID32_t                            id32;
     eOservice_onendofoperation_fun_t        overrideonfullscaleready; 
     eOas_strain_t*                          strain;       
+    EOarray*                                id32ofregulars;    
 }; 
 
 

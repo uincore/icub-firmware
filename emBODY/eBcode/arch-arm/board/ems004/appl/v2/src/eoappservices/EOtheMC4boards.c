@@ -517,7 +517,7 @@ extern eOmeas_velocity_t eo_mc4boards_Convert_Velocity_fromCAN(EOtheMC4boards *p
 //    return((icubCanProto_velocity_t)tmp);
 //#else
 
-//    /////#warning --> test it: we believe that we dont need the __fabs()
+//    #warning --> test it: we believe that we dont need the __fabs()
 //    
 //    float impVel = (float)vel * (s_eo_themc4boards.convencoder[joint].factor); // transform from icubdeg/sec to imp/sec
 //    impVel /= (1000.0f); // transform from imp/sec to imp/ms
@@ -575,6 +575,7 @@ extern icubCanProto_acceleration_t eo_mc4boards_Convert_Acceleration_toCAN(EOthe
 
 extern icubCanProto_stiffness_t eo_mc4boards_Convert_impedanceStiffness_I2S(EOtheMC4boards *p, uint8_t joint, eOmeas_stiffness_t stiff)
 {
+    
     if(joint >= s_eo_themc4boards.numofjomos)
     {   
         return(0);
@@ -594,7 +595,13 @@ extern icubCanProto_stiffness_t eo_mc4boards_Convert_impedanceStiffness_I2S(EOth
     //inoltre lo divido per mille perche' su robot interface e' moltiplicato per 1000 per avere piu' precisione possibile
     //return((icubCanProto_stiffness_t)(((i_stiff / factor)) /1000.0) );
     
-    return((icubCanProto_stiffness_t)(((tmpstiff / factor)) /1000.0f) );    
+    
+    icubCanProto_stiffness_t ret;
+    float v = tmpstiff / factor /1000.0f;
+    if ( v >0 ) ret = (icubCanProto_stiffness_t)(v);
+    else ret = -((icubCanProto_stiffness_t)(-v));
+        
+    return ret;    
 }
 
 extern eOmeas_stiffness_t       eo_mc4boards_Convert_impedanceStiffness_S2I(EOtheMC4boards *p, uint8_t joint, icubCanProto_stiffness_t stiff)
@@ -604,9 +611,14 @@ extern eOmeas_stiffness_t       eo_mc4boards_Convert_impedanceStiffness_S2I(EOth
         return(0);
     }
     
-    eOmeas_stiffness_t aux = stiff;
+    float ret  = stiff*s_eo_themc4boards.convencoder[joint].factor*1000;  
+
+    if(ret<0)
+        ret = -ret;
     
-    return(aux*s_eo_themc4boards.convencoder[joint].factor*1000);    
+    eOmeas_stiffness_t aux = (eOmeas_stiffness_t) ret;
+
+    return(aux);
 }
 
 extern icubCanProto_damping_t eo_mc4boards_Convert_impedanceDamping_I2S(EOtheMC4boards *p, uint8_t joint, eOmeas_damping_t damping)
@@ -627,8 +639,13 @@ extern icubCanProto_damping_t eo_mc4boards_Convert_impedanceDamping_I2S(EOtheMC4
     }
     
     //arriva espresso in icubdegree e devo trasformarlo nelle tacche di encoder.
-    //qui non divido per 1000 perche' devo estrimerlo al millisec.
-    return((icubCanProto_stiffness_t)((tmpdamping / s_eo_themc4boards.convencoder[joint].factor)) );    
+    //qui non divido per 1000 perche' devo esprimerlo al millisec.
+    icubCanProto_damping_t ret;
+    float v = tmpdamping / s_eo_themc4boards.convencoder[joint].factor;
+    if ( v >0 ) ret = (icubCanProto_damping_t)(v);
+    else ret = -((icubCanProto_damping_t)(-v));
+        
+    return ret;    
 }
 
 extern eOmeas_damping_t       eo_mc4boards_Convert_impedanceDamping_S2I(EOtheMC4boards *p, uint8_t joint, icubCanProto_damping_t damping)
@@ -637,9 +654,16 @@ extern eOmeas_damping_t       eo_mc4boards_Convert_impedanceDamping_S2I(EOtheMC4
     {   
         return(0);
     }
-    eOmeas_damping_t aux = damping;
 
-    return(aux*s_eo_themc4boards.convencoder[joint].factor);    
+    float ret  = damping*s_eo_themc4boards.convencoder[joint].factor*1000;  
+
+    if(ret<0)
+        ret = -ret;
+    
+    eOmeas_damping_t aux = (eOmeas_damping_t) ret;
+
+    return(aux);
+    
 }
 
 extern icubCanProto_torque_t eo_mc4boards_Convert_torque_I2S(EOtheMC4boards *p, uint8_t joint, eOmeas_torque_t torque)

@@ -65,15 +65,12 @@
 // - declaration of static functions
 // --------------------------------------------------------------------------------------------------------------------
 static void s_eo_currents_watchdog_CheckSpike(uint8_t joint, int16_t value);
-#ifdef INCLUDE_NEVER_REFERENCED
 static void s_eo_currents_watchdog_CheckI2T(uint8_t joint, int16_t value);
-#endif
 static void s_eo_currents_watchdog_UpdateMotorCurrents(uint8_t joint, int16_t value);
-#ifdef INCLUDE_NEVER_REFERENCED
 EO_static_inline uint32_t s_eo_currents_watchdog_averageCalc_addValue(uint8_t motor, int16_t value);
 EO_static_inline void s_eo_currents_watchdog_averageCalc_reset(uint8_t motor);
 EO_static_inline eObool_t s_eo_currents_watchdog_averageCalc_collectDataIsCompleted(uint8_t motor);
-#endif
+
 
 // --------------------------------------------------------------------------------------------------------------------
 // - definition (and initialisation) of static variables
@@ -252,7 +249,6 @@ static void s_eo_currents_watchdog_CheckSpike(uint8_t motor, int16_t value)
     return;
 }
 
-#ifdef INCLUDE_NEVER_REFERENCED
 static void s_eo_currents_watchdog_CheckI2T(uint8_t motor, int16_t value)
 {
 	// apply a simple LOW-PASS filter and if the value is above a threshold signal the error
@@ -307,8 +303,6 @@ static void s_eo_currents_watchdog_CheckI2T(uint8_t motor, int16_t value)
     s_eo_currents_watchdog_averageCalc_reset(motor);
 
 }
-#endif
-
 #define I2T_CHECK_USE_AVERAGE_CURRENT
 
 #ifdef I2T_CHECK_USE_AVERAGE_CURRENT 
@@ -327,15 +321,13 @@ cma_n+1 = cma_n + ( (x_n+1 -cma_n) / (n+1) )
 see: https://en.wikipedia.org/wiki/Moving_average
 
 */
-#ifdef INCLUDE_NEVER_REFERENCED
 EO_static_inline uint32_t s_eo_currents_watchdog_averageCalc_addValue(uint8_t motor, int16_t value)
 {
     s_eo_currents_watchdog.avgCurrent[motor].counter++;
     s_eo_currents_watchdog.avgCurrent[motor].commulativeAverage += (value - s_eo_currents_watchdog.avgCurrent[motor].commulativeAverage)/s_eo_currents_watchdog.avgCurrent[motor].counter ;
     return(s_eo_currents_watchdog.avgCurrent[motor].commulativeAverage); 
 }
-#endif
-#ifdef INCLUDE_NEVER_REFERENCED
+
 EO_static_inline void s_eo_currents_watchdog_averageCalc_reset(uint8_t motor)
 {
     s_eo_currents_watchdog.avgCurrent[motor].counter = 0;
@@ -345,7 +337,6 @@ EO_static_inline eObool_t s_eo_currents_watchdog_averageCalc_collectDataIsComple
 {
     return(s_eo_currents_watchdog.avgCurrent[motor].counter==FILTER_WINDOW);
 }
-#endif
 
 #else
 

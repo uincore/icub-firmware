@@ -132,7 +132,7 @@ extern EOtheARMenvironment * eo_armenv_Initialise(const eEmoduleInfo_t *modinfo,
                                                                                s_eo_armenv_eproc_get);
         
         
-//         /////#warning --> acemor says: we make sure that the oui is not the infamous 0x112233 but ...
+//         #warning --> acemor says: we make sure that the oui is not the infamous 0x112233 but ...
 //         
 //         
 //         shalinfo_deviceinfo_t deviceinfo;
@@ -238,7 +238,7 @@ static eOresult_t s_eo_armenv_shareddata_sync(EOVtheEnvironmentDerived *p)
     // ok, get back my type.
 //    EOVtheEnvironment *armenv = (EOVtheEnvironment *)p;
     
-//    /////#warning: we could remove teh check vs argument not NULL, as long as it is called correctly
+//    #warning: we could remove teh check vs argument not NULL, as long as it is called correctly
 //    if(NULL == armenv) 
 //    {
 //        return(eores_NOK_nullpointer);
@@ -256,7 +256,7 @@ static eOresult_t s_eo_armenv_code_proc_offset_get(EOVtheEnvironmentDerived *p, 
     // ok, get back my type.
 //    EOVtheEnvironment *armenv = (EOVtheEnvironment *)p;
     
-//    /////#warning: we could remove teh check vs argument not NULL, as long as it is called correctly
+//    #warning: we could remove teh check vs argument not NULL, as long as it is called correctly
 //    if(NULL == armenv) 
 //    {
 //        return(eores_NOK_nullpointer);
@@ -274,7 +274,7 @@ static eOresult_t s_eo_armenv_shareddata_ipnet_get(EOVtheEnvironmentDerived *p, 
     // ok, get back my type.
     //EOVtheEnvironment *armenv = (EOVtheEnvironment *)p;
 
-//    /////#warning: we could remove teh check vs argument not NULL, as long as it is called correctly
+//    #warning: we could remove teh check vs argument not NULL, as long as it is called correctly
 //    if(NULL == armenv) 
 //    {
 //        return(eores_NOK_nullpointer);
@@ -298,7 +298,7 @@ static eOresult_t s_eo_armenv_shareddata_cannets_get(EOVtheEnvironmentDerived *p
     // ok, get back my type.
     //EOVtheEnvironment *armenv = (EOVtheEnvironment *)p;
     
-//    /////#warning: we could remove teh check vs argument not NULL, as long as it is called correctly
+//    #warning: we could remove teh check vs argument not NULL, as long as it is called correctly
 //    if(NULL == armenv) 
 //    {
 //        return(eores_NOK_nullpointer);
@@ -323,7 +323,7 @@ static eOresult_t s_eo_armenv_eproc_get(EOVtheEnvironmentDerived *p, eEprocess_t
     // ok, get back my type.
     //EOVtheEnvironment *armenv = (EOVtheEnvironment *)p;
 
-//    /////#warning: we could remove teh check vs argument not NULL, as long as it is called correctly
+//    #warning: we could remove teh check vs argument not NULL, as long as it is called correctly
 //    if(NULL == armenv) 
 //    {
 //        return(eores_NOK_nullpointer);

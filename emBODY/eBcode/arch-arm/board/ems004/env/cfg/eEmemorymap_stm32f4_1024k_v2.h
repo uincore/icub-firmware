@@ -30,7 +30,7 @@
 
 // - public #define  --------------------------------------------------------------------------------------------------
 
-///////#warning --> clean memory-map by: removing shalsys apart from shared ram used in ipc
+//#warning --> clean memory-map by: removing shalsys apart from shared ram used in ipc
 
 
 // --- general properties

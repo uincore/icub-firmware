@@ -179,7 +179,7 @@ extern eOresult_t eocanprotMCperiodic_parser_PER_MC_MSG__PID_VAL(eOcanframe_t *f
             return(eores_OK);        
         }
         #if 1
-            /////#warning CAVEAT: jstatus->ofpid.output is now an int16_t and the can frame should have a int16_t ... however it works like that
+            #warning CAVEAT: jstatus->ofpid.output is now an int16_t and the can frame should have a int16_t ... however it works like that
             // marco.accame on 02apr15: i ahve seen together with marco.randazzo that the mc4 send uint16, thus in here there is a double error which make things work 
             // see s_eo_icubCanProto_parser_per_mb_cmd__pidVal() in ems4rd-v01.uvproj
             joint->status.core.ofpid.legacy.output = *((uint16_t*)&(frame->data[offset[j]]));
@@ -231,7 +231,7 @@ extern eOresult_t eocanprotMCperiodic_parser_PER_MC_MSG__STATUS(eOcanframe_t *fr
         //res = s_eocanprotMCperiodic_convert_icubCanProtoControlMode2eOmcControlMode((icubCanProto_controlmode_t) frame->data[1], &eomc_controlmode);
         //if(eores_OK != res)
         //{
-        //    /////#warning -> TODO: add diagnostics about not found board as in s_eo_icubCanProto_mb_send_runtime_error_diagnostics()
+        //    #warning -> TODO: add diagnostics about not found board as in s_eo_icubCanProto_mb_send_runtime_error_diagnostics()
         //    return(eores_OK);    
         //}
         //eo_emsController_ReadMotorstatus(jointindex, frame->data);
@@ -260,7 +260,7 @@ extern eOresult_t eocanprotMCperiodic_parser_PER_MC_MSG__STATUS(eOcanframe_t *fr
             // manage controlmode
             if(eores_OK != s_eocanprotMCperiodic_convert_icubCanProtoControlMode2eOmcControlMode((icubCanProto_controlmode_t) frame->data[offset[j]], &eomc_controlmode))
             {
-                /////#warning -> TODO: add diagnostics about not found control mode as in s_eo_icubCanProto_mb_send_runtime_error_diagnostics()
+                #warning -> TODO: add diagnostics about not found control mode as in s_eo_icubCanProto_mb_send_runtime_error_diagnostics()
                 return(eores_OK);    
             }
             
@@ -486,7 +486,7 @@ static void* s_eocanprotMCperiodic_get_entity(eOprot_entity_t entity, eOcanframe
     
     if(EOK_uint08dummy == ii)
     {     
-        ///////#warning -> TODO: add diagnostics about not found board as in s_eo_icubCanProto_mb_send_runtime_error_diagnostics()
+        //#warning -> TODO: add diagnostics about not found board as in s_eo_icubCanProto_mb_send_runtime_error_diagnostics()
         return(NULL);
     }
     
@@ -656,7 +656,7 @@ static void s_former_PER_MC_prepare_frame(eOcanprot_descriptor_t *descriptor, eO
 //    
 //    if(EOK_uint08dummy == index)
 //    {     
-//        /////#warning -> TODO: add diagnostics about not found board as in s_eo_icubCanProto_mb_send_runtime_error_diagnostics()
+//        #warning -> TODO: add diagnostics about not found board as in s_eo_icubCanProto_mb_send_runtime_error_diagnostics()
 //        return(NULL);
 //    }
 //    
@@ -684,7 +684,7 @@ static void s_former_PER_MC_prepare_frame(eOcanprot_descriptor_t *descriptor, eO
 //    
 //    if(EOK_uint08dummy == index)
 //    {     
-//        /////#warning -> TODO: add diagnostics about not found board as in s_eo_icubCanProto_mb_send_runtime_error_diagnostics()
+//        #warning -> TODO: add diagnostics about not found board as in s_eo_icubCanProto_mb_send_runtime_error_diagnostics()
 //        return(NULL);
 //    }
 //    
@@ -718,7 +718,7 @@ static void s_former_PER_MC_prepare_frame(eOcanprot_descriptor_t *descriptor, eO
 //            // for this board we must not issue the error and we must do nothing
 //            return(eores_OK);            
 //        }        
-//        /////#warning -> TODO: add diagnostics about not found board as in s_eo_icubCanProto_mb_send_runtime_error_diagnostics()
+//        #warning -> TODO: add diagnostics about not found board as in s_eo_icubCanProto_mb_send_runtime_error_diagnostics()
 //        return(eores_OK);
 //    }
 
@@ -727,7 +727,7 @@ static void s_former_PER_MC_prepare_frame(eOcanprot_descriptor_t *descriptor, eO
 //    
 //    if(NULL == motor)
 //    {
-//        /////#warning -> TODO: add diagnostics about not found board as in s_eo_icubCanProto_mb_send_runtime_error_diagnostics()
+//        #warning -> TODO: add diagnostics about not found board as in s_eo_icubCanProto_mb_send_runtime_error_diagnostics()
 //        return(eores_OK);        
 //    }
 //    

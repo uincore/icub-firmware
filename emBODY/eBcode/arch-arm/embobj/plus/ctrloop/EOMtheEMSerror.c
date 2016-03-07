@@ -180,7 +180,7 @@ extern eOresult_t eom_emserror_SetFatalError(EOMtheEMSerror *p, const eOerrmanDe
     
     s_emserror_singleton.errordescriptor.par16 = s_emserror_singleton.numberoffatalerrors;
     s_emserror_singleton.errordescriptor.par64 = 0;
-    ///////#warning marco.accame: we could use a par64 to send to robotinterface some more info about the fatal error. think of it
+    //#warning marco.accame: we could use a par64 to send to robotinterface some more info about the fatal error. think of it
     // send fatal error event.
    
     return(eores_OK);    
@@ -357,7 +357,7 @@ static void s_eom_emserror_task_run(EOMtask *p, uint32_t t)
 //    
 //    
 //    eo_infodispatcher_Put(eo_infodispatcher_GetHandle(), &props, info);
-//    /////#warning --> eo_infodispatcher_Put() requires also that someone triggers the transmission of a packet .... think of it 
+//    #warning --> eo_infodispatcher_Put() requires also that someone triggers the transmission of a packet .... think of it 
 //    
 //    eom_emserror_OnError_userdefined_call(errtype, info, caller, des);
 //    
@@ -377,7 +377,7 @@ static void s_eom_emserror_task_run(EOMtask *p, uint32_t t)
 //    eom_mutex_Take(s_emserror_singleton.mutex, eok_reltimeINFINITE);
 //}
 //
-///////#warning --> marco.accame: bisogna pensare a come fermare il sistema nel caso di errore fatale .... lo si manda o no in task di errore?
+//#warning --> marco.accame: bisogna pensare a come fermare il sistema nel caso di errore fatale .... lo si manda o no in task di errore?
 
 
 

@@ -477,7 +477,7 @@ extern eEresult_t shalbase_storage_clr(const eEstorage_t *strg, const uint32_t s
     }
     else if(ee_strg_eeprom == strg->type)
     {
-        ///////#warning add hal_eeprom_clear
+        //#warning add hal_eeprom_clear
         res = hal_eeprom_erase(hal_eeprom_i2c_01, strg->addr, size);
         res =  res;
     }    

@@ -278,7 +278,7 @@ extern eEresult_t ee_sharserv_selfregister(void)
 
 extern eEresult_t ee_sharserv_deinit(void)
 {
-    ///////#warning --> do ee_sharserv_deinit() so that it calls shalBASE, shalPART and shalINFO
+    //#warning --> do ee_sharserv_deinit() so that it calls shalBASE, shalPART and shalINFO
     
     return(ee_res_OK);
 }

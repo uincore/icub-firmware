@@ -257,7 +257,7 @@ extern EOMtheEMSrunner * eom_emsrunner_Initialise(const eOemsrunner_cfg_t *cfg)
     memcpy(&s_theemsrunner.haltimer_start, cfg->haltimerstart, sizeof(s_theemsrunner.haltimer_start));
     memcpy(&s_theemsrunner.haltimer_alert, cfg->haltimeralert, sizeof(s_theemsrunner.haltimer_alert));
     // verify that they are all different
-    ///////#warning TODO: in eom_emsrunner_Initialise() you may write code to check that all 6 hal timers are different
+    //#warning TODO: in eom_emsrunner_Initialise() you may write code to check that all 6 hal timers are different
     
     s_theemsrunner.cycleisrunning = eobool_false; 
     
@@ -436,8 +436,8 @@ extern eOresult_t eom_emsrunner_Start(EOMtheEMSrunner *p)
     
     // set the ems-transceiver to have a given tx-rate.
     EOtransmitter * transmitter = eo_transceiver_GetTransmitter(eom_emstransceiver_GetTransceiver(eom_emstransceiver_GetHandle()));    
-    // replies are not decimated. only regulars and occasionals are decimated. in this way we have prompt responses to ask<> rops
-    eo_transmitter_TXdecimation_Set(transmitter, 1, s_theemsrunner.usedTXdecimationfactor, s_theemsrunner.usedTXdecimationfactor);
+    // replies and occasionals are not decimated. only regulars are decimated. in this way we have prompt responses to ask<> rops and we can send up occasionals asap.
+    eo_transmitter_TXdecimation_Set(transmitter, 1, s_theemsrunner.usedTXdecimationfactor, 1);
 
     s_eom_emsrunner_6HALTIMERS_start_oneshotosalcbk_for_rxdotx_cycle(&s_theemsrunner);
   
@@ -845,7 +845,7 @@ __weak extern void eom_emsrunner_hid_userdef_onexecutionoverflow(EOMtheEMSrunner
     errdes.code             = errcode[taskid];
     errdes.par16            = (delta > 0xffff) ? (0xffff) : (delta);
     errdes.par64            = 0;
-//    /////#warning marco.accame: think about putting in par64 also other timings ... 
+//    #warning marco.accame: think about putting in par64 also other timings ... 
     errdes.sourcedevice     = eo_errman_sourcedevice_localboard;
     errdes.sourceaddress    = 0;    
     //eo_errman_Error(eo_errman_GetHandle(), errortype, str, s_eobj_ownname, &errdes); 
@@ -1114,7 +1114,7 @@ static void s_eom_emsrunner_taskTX_run(EOMtask *p, uint32_t t)
         // the semaphore is incremented when the task IPnet gives the packet to the IPAL, which in turns directly writes into ETH peripheral
         osal_semaphore_decrement(s_theemsrunner.waitudptxisdone, osal_reltimeINFINITE);
         s_theemsrunner.numofpacketsinsidesocket--;
-        ///////#warning --> marco.accame: we wait for osal_reltimeINFINITE that the udp packet is sent ... can we think of a timeout???
+        //#warning --> marco.accame: we wait for osal_reltimeINFINITE that the udp packet is sent ... can we think of a timeout???
     }
 
    
@@ -1175,7 +1175,7 @@ static void s_eom_emsrunner_taskTX_run(EOMtask *p, uint32_t t)
 			s_eom_emsrunner_diagnosticsinfo.min_et[eo_emsrunner_taskid_runTX] = eom_emsrunner_txduration;
 #ifdef SEND_STATISTICS_INFO
 		//Send up to PC104 some diagnostics every 5seconds
-		/////#warning davide: dispatcher must have a capacity >= 9
+		#warning davide: dispatcher must have a capacity >= 9
 		if(s_theemsrunner.iterationnumber%STATISTICS_PERIOD == 0)
 		{
 			s_eom_emsrunner_send_diagnosticsinfo_average_timing();

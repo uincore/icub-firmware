@@ -70,6 +70,104 @@
 // - definition (and initialisation) of static variables
 // --------------------------------------------------------------------------------------------------------------------
 
+#if     defined(ICUB_MEC_V1) | defined(ICUB_MEC_V2) | defined(ICUB_MEC_V3)
+
+static const eOmn_serv_configuration_t s_serv_config_as_mais =  
+{   
+    .type       = eomn_serv_AS_mais,
+    .filler     = {0},
+    .data.as.mais = 
+    {
+        .version    =
+        {
+            .firmware   = { .major = 0, .minor = 0, .build = 0 },
+            .protocol   = { .major = 1, .minor = 0 }    
+        },
+        .canloc = 
+        {
+            .port           = eOcanport1,
+            .addr           = 14,
+            .insideindex    = eocanmap_insideindex_none                    
+        }
+    }    
+};
+
+#endif
+
+#if     defined(ICUB_MEC_V1) | defined(ICUB_MEC_V2)
+
+
+static const eOmn_serv_configuration_t s_serv_config_sk_skin_eb2_eb4 =
+{   // eb2 / eb4
+    .type       = eomn_serv_SK_skin,
+    .filler     = {0},
+    .data.sk.skin = 
+    {
+        .version    =
+        {
+            .firmware   = { .major = 0, .minor = 0, .build = 0 },
+            .protocol   = { .major = 0, .minor = 0 }  // in case of {0, 0} the can discovery is not done but the verify will be ok. for normal case use: {1, 0}    
+        },
+        .numofpatches   = 1,
+        .canmapskin[0] = { 0x0000, 0x7f00 },
+        .canmapskin[1] = {0},
+        .canmapskin[2] = {0},
+        .canmapskin[3] = {0}
+    }    
+};
+
+static const eOmn_serv_configuration_t s_serv_config_sk_skin_eb10_eb11 =   
+{   // eb10 / eb11
+    .type       = eomn_serv_SK_skin,
+    .filler     = {0},
+    .data.sk.skin = 
+    {
+        .version    =
+        {
+            .firmware   = { .major = 0, .minor = 0, .build = 0 },
+            .protocol   = { .major = 0, .minor = 0 }  // in case of {0, 0} the can discovery is not done but the verify will be ok. for normal case use: {1, 0}   
+        },
+        .numofpatches   = 2,
+        .canmapskin[0] = { 0x00fe, 0x0000 },
+        .canmapskin[1] = { 0x0000, 0x3f00 },
+        .canmapskin[2] = {0},
+        .canmapskin[3] = {0}
+    }    
+};    
+
+
+static const eOmn_serv_configuration_t s_serv_config_as_inertial_eb2_eb4 =
+{   // eb2 / eb4
+    .type       = eomn_serv_AS_inertial,
+    .filler     = {0},
+    .data.as.inertial = 
+    {
+        .version    =
+        {
+            .firmware   = { .major = 0, .minor = 0, .build = 0 },
+            .protocol   = { .major = 0, .minor = 0 }  // in case of {0, 0} the can discovery is not done but the verify will be ok. for normal case use: {1, 0}  
+        },
+        .canmap = { 0x0000, 0x7f00 }
+    }    
+};
+    
+
+static const eOmn_serv_configuration_t s_serv_config_as_inertial_eb10_eb11 =    
+{   // eb10 / eb11
+    .type       = eomn_serv_AS_inertial,
+    .filler     = {0},
+    .data.as.inertial = 
+    {
+        .version    =
+        {
+            .firmware   = { .major = 0, .minor = 0, .build = 0 },
+            .protocol   = { .major = 0, .minor = 0 }  // in case of {0, 0} the can discovery is not done but the verify will be ok. for normal case use: {1, 0}  
+        },
+        .canmap = { 0x00fe, 0x3f00 }
+    }    
+};  
+
+
 static const eOmn_serv_configuration_t s_serv_config_as_strain_eb1_eb3 = 
 {   // eb1 or eb3
     .type       = eomn_serv_AS_strain,
@@ -142,7 +240,7 @@ static const eOmn_serv_configuration_t s_serv_config_mc_eb1_eb3 =
         .version   =
         {
             .firmware   = { .major = 0, .minor = 0, .build = 0 },
-            .protocol   = { .major = 1, .minor = 3 }
+            .protocol   = { .major = 1, .minor = 4 }
         },
         .filler                 = {0},
         .arrayofjomodescriptors =
@@ -368,7 +466,7 @@ static const eOmn_serv_configuration_t s_serv_config_mc_eb5 =
         .version   =
         {
             .firmware   = { .major = 0, .minor = 0, .build = 0 },
-            .protocol   = { .major = 1, .minor = 3 }
+            .protocol   = { .major = 1, .minor = 4 }
         },
         .filler                 = {0},
         .arrayofjomodescriptors =
@@ -481,7 +579,7 @@ static const eOmn_serv_configuration_t s_serv_config_mc_eb6_eb8 =
         .version   =
         {
             .firmware   = { .major = 0, .minor = 0, .build = 0 },
-            .protocol   = { .major = 1, .minor = 3 }
+            .protocol   = { .major = 1, .minor = 4 }
         },
         .filler                 = {0},
         .arrayofjomodescriptors =
@@ -611,7 +709,7 @@ static const eOmn_serv_configuration_t s_serv_config_mc_eb7_eb9 =
         .version   =
         {
             .firmware   = { .major = 0, .minor = 0, .build = 0 },
-            .protocol   = { .major = 1, .minor = 3 }
+            .protocol   = { .major = 1, .minor = 4 }
         },
         .filler                 = {0},
         .arrayofjomodescriptors =
@@ -697,6 +795,12 @@ static const eOmn_serv_configuration_t s_serv_config_mc_eb7_eb9 =
     }
 };
 
+
+#endif
+
+
+
+#if defined(CER)
 
 static const eOmn_serv_configuration_t s_serv_config_mc_cer_eb15 =
 {   // eb15
@@ -917,6 +1021,143 @@ static const eOmn_serv_configuration_t s_serv_config_mc_cer_eb17 =
         }             
     }
 };
+
+
+static const eOmn_serv_configuration_t s_serv_config_mc_cer_eb21 =
+{   // eb21
+    .type       = eomn_serv_MC_foc,
+    .filler     = {0},
+    .data.mc.foc_based = 
+    {
+        .boardtype4mccontroller = emscontroller_board_CER_BASE,
+        .version    =
+        {
+            .firmware   = { .major = 0, .minor = 0, .build = 0 },
+            .protocol   = { .major = 1, .minor = 3 }
+        },
+        .filler                 = {0},
+        .arrayofjomodescriptors =
+        {
+            .head   = 
+            {
+                .capacity       = 4,
+                .itemsize       = sizeof(eOmn_serv_jomo_descriptor_t),
+                .size           = 4,
+                .internalmem    = 0                    
+            },
+            .data   =
+            {
+                { // joint 0
+                    .actuator.foc.canloc    =
+                    {
+                        .port           = eOcanport1,
+                        .addr           = 4,
+                        .insideindex    = eomn_serv_caninsideindex_first                             
+                    },
+                    .sensor         =
+                    {
+                        .type   = eomn_serv_mc_sensor_none,
+                        .port   = eomn_serv_mc_port_none,
+                        .pos    = eomn_serv_mc_sensor_pos_none
+                    },
+                    .extrasensor    =
+                    {
+                        .type   = eomn_serv_mc_sensor_none,
+                        .port   = eomn_serv_mc_port_none,
+                        .pos    = eomn_serv_mc_sensor_pos_none
+                    }
+                },
+                { // joint 1
+                    .actuator.foc.canloc    =
+                    {
+                        .port           = eOcanport1,
+                        .addr           = 2,
+                        .insideindex    = eomn_serv_caninsideindex_first                             
+                    },
+                    .sensor         =
+                    {
+                        .type   = eomn_serv_mc_sensor_none,
+                        .port   = eomn_serv_mc_port_none,
+                        .pos    = eomn_serv_mc_sensor_pos_none                         
+                    },
+                    .extrasensor    =
+                    {
+                        .type   = eomn_serv_mc_sensor_none,
+                        .port   = eomn_serv_mc_port_none,
+                        .pos    = eomn_serv_mc_sensor_pos_none
+                    }
+                },                    
+                { // joint 2
+                    .actuator.foc.canloc    =
+                    {
+                        .port           = eOcanport1,
+                        .addr           = 3,
+                        .insideindex    = eomn_serv_caninsideindex_first                             
+                    },
+                    .sensor         =
+                    {
+                        .type   = eomn_serv_mc_sensor_none,
+                        .port   = eomn_serv_mc_port_none,
+                        .pos    = eomn_serv_mc_sensor_pos_none
+                    },
+                    .extrasensor    =
+                    {
+                        .type   = eomn_serv_mc_sensor_none,
+                        .port   = eomn_serv_mc_port_none,
+                        .pos    = eomn_serv_mc_sensor_pos_none
+                    }
+                },               
+                { // joint 3
+                    .actuator.foc.canloc    =
+                    {
+                        .port           = eOcanport1,
+                        .addr           = 1,
+                        .insideindex    = eomn_serv_caninsideindex_first                             
+                    },
+                    .sensor         =
+                    {
+                        .type   = eomn_serv_mc_sensor_none,
+                        .port   = eomn_serv_mc_port_none,
+                        .pos    = eomn_serv_mc_sensor_pos_none
+                    },
+                    .extrasensor    =
+                    {
+                        .type   = eomn_serv_mc_sensor_none,
+                        .port   = eomn_serv_mc_port_none,
+                        .pos    = eomn_serv_mc_sensor_pos_none
+                    }
+                }                    
+            }
+        },
+        .jomocoupling       =
+        {
+            .joint2set      = 
+            {   // each joint is on a different set 
+                0, 1, 2, 3 
+            },
+            .joint2motor    = 
+            {   // zero matrix: use matrix embedded in controller and seecetd by boardtype4mccontroller
+                { EO_COMMON_FLOAT_TO_Q17_14(0.0f),      EO_COMMON_FLOAT_TO_Q17_14(0.0f),    EO_COMMON_FLOAT_TO_Q17_14(0.0f),    EO_COMMON_FLOAT_TO_Q17_14(0.0f) },
+                { EO_COMMON_FLOAT_TO_Q17_14(0.0f),      EO_COMMON_FLOAT_TO_Q17_14(0.0f),    EO_COMMON_FLOAT_TO_Q17_14(0.0f),    EO_COMMON_FLOAT_TO_Q17_14(0.0f) },
+                { EO_COMMON_FLOAT_TO_Q17_14(0.0f),      EO_COMMON_FLOAT_TO_Q17_14(0.0f),    EO_COMMON_FLOAT_TO_Q17_14(0.0f),    EO_COMMON_FLOAT_TO_Q17_14(0.0f) },
+                { EO_COMMON_FLOAT_TO_Q17_14(0.0f),      EO_COMMON_FLOAT_TO_Q17_14(0.0f),    EO_COMMON_FLOAT_TO_Q17_14(0.0f),    EO_COMMON_FLOAT_TO_Q17_14(0.0f) }        
+            },
+            .joint2encoder  = 
+            {   // identical matrix
+                { EO_COMMON_FLOAT_TO_Q17_14(1.0f),      EO_COMMON_FLOAT_TO_Q17_14(0.0f),    EO_COMMON_FLOAT_TO_Q17_14(0.0f),    EO_COMMON_FLOAT_TO_Q17_14(0.0f) },
+                { EO_COMMON_FLOAT_TO_Q17_14(0.0f),      EO_COMMON_FLOAT_TO_Q17_14(1.0f),    EO_COMMON_FLOAT_TO_Q17_14(0.0f),    EO_COMMON_FLOAT_TO_Q17_14(0.0f) },
+                { EO_COMMON_FLOAT_TO_Q17_14(0.0f),      EO_COMMON_FLOAT_TO_Q17_14(0.0f),    EO_COMMON_FLOAT_TO_Q17_14(1.0f),    EO_COMMON_FLOAT_TO_Q17_14(0.0f) },
+                { EO_COMMON_FLOAT_TO_Q17_14(0.0f),      EO_COMMON_FLOAT_TO_Q17_14(0.0f),    EO_COMMON_FLOAT_TO_Q17_14(0.0f),    EO_COMMON_FLOAT_TO_Q17_14(1.0f) } 
+            }  
+        }                    
+    }
+};
+
+#endif
+
+
+
+#if defined(ICUB_MEC_V3)
 
 static const eOmn_serv_configuration_t s_serv_config_mc_v3_0B0 =
 {   // eb12 or 0B0
@@ -1393,7 +1634,7 @@ static const eOmn_serv_configuration_t s_serv_config_mc_v3_0B9 =
 
 
 static const eOmn_serv_configuration_t s_serv_config_mc_v3_1B2_2B2 =
-{   // .18 or .xx
+{
     .type       = eomn_serv_MC_mc4plus,
     .filler     = {0},
     .data.mc.mc4plus_based = 
@@ -1413,26 +1654,26 @@ static const eOmn_serv_configuration_t s_serv_config_mc_v3_1B2_2B2 =
             {
                 { // joint 0:   tentative wrist pronosupination
                     .actuator.pwm   =
-                    {   // motor 1B2M2
-                        .port   = eomn_serv_mc_port_mc4plus_pwmP4,                          
+                    {   // motor 1B2M0
+                        .port   = eomn_serv_mc_port_mc4plus_pwmP3,                          
                     },
                     .sensor         =
                     {
                         .type   = eomn_serv_mc_sensor_encoder_inc,
-                        .port   = eomn_serv_mc_port_mc4plus_qencP4,
+                        .port   = eomn_serv_mc_port_mc4plus_qencP3,
                         .pos    = eomn_serv_mc_sensor_pos_atjoint
                     },
                     .extrasensor    =
                     {
-                        .type   = eomn_serv_mc_sensor_none,
-                        .port   = eomn_serv_mc_port_none,
-                        .pos    = eomn_serv_mc_sensor_pos_none
+                        .type   = eomn_serv_mc_sensor_encoder_inc,
+                        .port   = eomn_serv_mc_port_mc4plus_qencP3,
+                        .pos    = eomn_serv_mc_sensor_pos_atmotor
                     }
                 },                 
                 { // joint 1:   tentative wrist coupled w/ 1B2M0 and LA-S5
                     .actuator.pwm   =
-                    {   // motor 1B2M0
-                        .port   = eomn_serv_mc_port_mc4plus_pwmP3,                         
+                    {   // motor 1B2M2
+                        .port   = eomn_serv_mc_port_mc4plus_pwmP4,                         
                     },
                     .sensor         =
                     {   // i try the aea LA-S5 in port SPI1 (P10)
@@ -1443,7 +1684,7 @@ static const eOmn_serv_configuration_t s_serv_config_mc_v3_1B2_2B2 =
                     .extrasensor    =
                     {   // inc encoder of motor 1B2M0
                         .type   = eomn_serv_mc_sensor_encoder_inc,
-                        .port   = eomn_serv_mc_port_mc4plus_qencP3,
+                        .port   = eomn_serv_mc_port_mc4plus_qencP4,
                         .pos    = eomn_serv_mc_sensor_pos_atmotor
                     }
                 },
@@ -1511,7 +1752,7 @@ static const eOmn_serv_configuration_t s_serv_config_mc_v3_1B2_2B2 =
 
 
 static const eOmn_serv_configuration_t s_serv_config_mc_v3_1B3_2B3 =
-{   // .17 or .xx
+{
     .type       = eomn_serv_MC_mc4plusmais,
     .filler     = {0},
     .data.mc.mc4plusmais_based = 
@@ -1773,136 +2014,12 @@ static const eOmn_serv_configuration_t s_serv_config_mc_v3_1B4_2B4 =
     }
 };
 
-static const eOmn_serv_configuration_t s_serv_config_mc_cer_eb21 =
-{   // eb21
-    .type       = eomn_serv_MC_foc,
-    .filler     = {0},
-    .data.mc.foc_based = 
-    {
-        .boardtype4mccontroller = emscontroller_board_CER_BASE,
-        .version    =
-        {
-            .firmware   = { .major = 0, .minor = 0, .build = 0 },
-            .protocol   = { .major = 1, .minor = 3 }
-        },
-        .filler                 = {0},
-        .arrayofjomodescriptors =
-        {
-            .head   = 
-            {
-                .capacity       = 4,
-                .itemsize       = sizeof(eOmn_serv_jomo_descriptor_t),
-                .size           = 4,
-                .internalmem    = 0                    
-            },
-            .data   =
-            {
-                { // joint 0
-                    .actuator.foc.canloc    =
-                    {
-                        .port           = eOcanport1,
-                        .addr           = 4,
-                        .insideindex    = eomn_serv_caninsideindex_first                             
-                    },
-                    .sensor         =
-                    {
-                        .type   = eomn_serv_mc_sensor_none,
-                        .port   = eomn_serv_mc_port_none,
-                        .pos    = eomn_serv_mc_sensor_pos_none
-                    },
-                    .extrasensor    =
-                    {
-                        .type   = eomn_serv_mc_sensor_none,
-                        .port   = eomn_serv_mc_port_none,
-                        .pos    = eomn_serv_mc_sensor_pos_none
-                    }
-                },
-                { // joint 1
-                    .actuator.foc.canloc    =
-                    {
-                        .port           = eOcanport1,
-                        .addr           = 2,
-                        .insideindex    = eomn_serv_caninsideindex_first                             
-                    },
-                    .sensor         =
-                    {
-                        .type   = eomn_serv_mc_sensor_none,
-                        .port   = eomn_serv_mc_port_none,
-                        .pos    = eomn_serv_mc_sensor_pos_none                         
-                    },
-                    .extrasensor    =
-                    {
-                        .type   = eomn_serv_mc_sensor_none,
-                        .port   = eomn_serv_mc_port_none,
-                        .pos    = eomn_serv_mc_sensor_pos_none
-                    }
-                },                    
-                { // joint 2
-                    .actuator.foc.canloc    =
-                    {
-                        .port           = eOcanport1,
-                        .addr           = 3,
-                        .insideindex    = eomn_serv_caninsideindex_first                             
-                    },
-                    .sensor         =
-                    {
-                        .type   = eomn_serv_mc_sensor_none,
-                        .port   = eomn_serv_mc_port_none,
-                        .pos    = eomn_serv_mc_sensor_pos_none
-                    },
-                    .extrasensor    =
-                    {
-                        .type   = eomn_serv_mc_sensor_none,
-                        .port   = eomn_serv_mc_port_none,
-                        .pos    = eomn_serv_mc_sensor_pos_none
-                    }
-                },               
-                { // joint 3
-                    .actuator.foc.canloc    =
-                    {
-                        .port           = eOcanport1,
-                        .addr           = 1,
-                        .insideindex    = eomn_serv_caninsideindex_first                             
-                    },
-                    .sensor         =
-                    {
-                        .type   = eomn_serv_mc_sensor_none,
-                        .port   = eomn_serv_mc_port_none,
-                        .pos    = eomn_serv_mc_sensor_pos_none
-                    },
-                    .extrasensor    =
-                    {
-                        .type   = eomn_serv_mc_sensor_none,
-                        .port   = eomn_serv_mc_port_none,
-                        .pos    = eomn_serv_mc_sensor_pos_none
-                    }
-                }                    
-            }
-        },
-        .jomocoupling       =
-        {
-            .joint2set      = 
-            {   // each joint is on a different set 
-                0, 1, 2, 3 
-            },
-            .joint2motor    = 
-            {   // zero matrix: use matrix embedded in controller and seecetd by boardtype4mccontroller
-                { EO_COMMON_FLOAT_TO_Q17_14(0.0f),      EO_COMMON_FLOAT_TO_Q17_14(0.0f),    EO_COMMON_FLOAT_TO_Q17_14(0.0f),    EO_COMMON_FLOAT_TO_Q17_14(0.0f) },
-                { EO_COMMON_FLOAT_TO_Q17_14(0.0f),      EO_COMMON_FLOAT_TO_Q17_14(0.0f),    EO_COMMON_FLOAT_TO_Q17_14(0.0f),    EO_COMMON_FLOAT_TO_Q17_14(0.0f) },
-                { EO_COMMON_FLOAT_TO_Q17_14(0.0f),      EO_COMMON_FLOAT_TO_Q17_14(0.0f),    EO_COMMON_FLOAT_TO_Q17_14(0.0f),    EO_COMMON_FLOAT_TO_Q17_14(0.0f) },
-                { EO_COMMON_FLOAT_TO_Q17_14(0.0f),      EO_COMMON_FLOAT_TO_Q17_14(0.0f),    EO_COMMON_FLOAT_TO_Q17_14(0.0f),    EO_COMMON_FLOAT_TO_Q17_14(0.0f) }        
-            },
-            .joint2encoder  = 
-            {   // identical matrix
-                { EO_COMMON_FLOAT_TO_Q17_14(1.0f),      EO_COMMON_FLOAT_TO_Q17_14(0.0f),    EO_COMMON_FLOAT_TO_Q17_14(0.0f),    EO_COMMON_FLOAT_TO_Q17_14(0.0f) },
-                { EO_COMMON_FLOAT_TO_Q17_14(0.0f),      EO_COMMON_FLOAT_TO_Q17_14(1.0f),    EO_COMMON_FLOAT_TO_Q17_14(0.0f),    EO_COMMON_FLOAT_TO_Q17_14(0.0f) },
-                { EO_COMMON_FLOAT_TO_Q17_14(0.0f),      EO_COMMON_FLOAT_TO_Q17_14(0.0f),    EO_COMMON_FLOAT_TO_Q17_14(1.0f),    EO_COMMON_FLOAT_TO_Q17_14(0.0f) },
-                { EO_COMMON_FLOAT_TO_Q17_14(0.0f),      EO_COMMON_FLOAT_TO_Q17_14(0.0f),    EO_COMMON_FLOAT_TO_Q17_14(0.0f),    EO_COMMON_FLOAT_TO_Q17_14(1.0f) } 
-            }  
-        }                    
-    }
-};
+#endif
 
+
+
+
+#if     defined(ICUB_MEC_V3)
 static const eOmn_serv_configuration_t s_serv_config_mc_cer_testOfmc2plus =
 {   // use address .1 then change it
     .type       = eomn_serv_MC_mc4plus, // it is ok to use it for now.
@@ -2020,101 +2137,10 @@ static const eOmn_serv_configuration_t s_serv_config_mc_cer_testOfmc2plus =
     }
 };
 
-
-static const eOmn_serv_configuration_t s_serv_config_as_mais_eb2_eb4 =  
-{   // eb2/2b4
-    .type       = eomn_serv_AS_mais,
-    .filler     = {0},
-    .data.as.mais = 
-    {
-        .version    =
-        {
-            .firmware   = { .major = 0, .minor = 0, .build = 0 },
-            .protocol   = { .major = 1, .minor = 0 }    
-        },
-        .canloc = 
-        {
-            .port           = eOcanport1,
-            .addr           = 14,
-            .insideindex    = eocanmap_insideindex_none                    
-        }
-    }    
-};
+#endif
 
 
-static const eOmn_serv_configuration_t s_serv_config_sk_skin_eb2_eb4 =
-{   // eb2 / eb4
-    .type       = eomn_serv_SK_skin,
-    .filler     = {0},
-    .data.sk.skin = 
-    {
-        .version    =
-        {
-            .firmware   = { .major = 0, .minor = 0, .build = 0 },
-            .protocol   = { .major = 0, .minor = 0 }  // in case of {0, 0} the can discovery is not done but the verify will be ok. for normal case use: {1, 0}    
-        },
-        .numofpatches   = 1,
-        .canmapskin[0] = { 0x0000, 0x7f00 },
-        .canmapskin[1] = {0},
-        .canmapskin[2] = {0},
-        .canmapskin[3] = {0}
-    }    
-};
-
-static const eOmn_serv_configuration_t s_serv_config_sk_skin_eb10_eb11 =   
-{   // eb10 / eb11
-    .type       = eomn_serv_SK_skin,
-    .filler     = {0},
-    .data.sk.skin = 
-    {
-        .version    =
-        {
-            .firmware   = { .major = 0, .minor = 0, .build = 0 },
-            .protocol   = { .major = 0, .minor = 0 }  // in case of {0, 0} the can discovery is not done but the verify will be ok. for normal case use: {1, 0}   
-        },
-        .numofpatches   = 2,
-        .canmapskin[0] = { 0x00fe, 0x0000 },
-        .canmapskin[1] = { 0x0000, 0x3f00 },
-        .canmapskin[2] = {0},
-        .canmapskin[3] = {0}
-    }    
-};    
-
-
-
-
-static const eOmn_serv_configuration_t s_serv_config_as_inertial_eb2_eb4 =
-{   // eb2 / eb4
-    .type       = eomn_serv_AS_inertial,
-    .filler     = {0},
-    .data.as.inertial = 
-    {
-        .version    =
-        {
-            .firmware   = { .major = 0, .minor = 0, .build = 0 },
-            .protocol   = { .major = 0, .minor = 0 }  // in case of {0, 0} the can discovery is not done but the verify will be ok. for normal case use: {1, 0}  
-        },
-        .canmap = { 0x0000, 0x7f00 }
-    }    
-};
-    
-
-static const eOmn_serv_configuration_t s_serv_config_as_inertial_eb10_eb11 =    
-{   // eb10 / eb11
-    .type       = eomn_serv_AS_inertial,
-    .filler     = {0},
-    .data.as.inertial = 
-    {
-        .version    =
-        {
-            .firmware   = { .major = 0, .minor = 0, .build = 0 },
-            .protocol   = { .major = 0, .minor = 0 }  // in case of {0, 0} the can discovery is not done but the verify will be ok. for normal case use: {1, 0}  
-        },
-        .canmap = { 0x00fe, 0x3f00 }
-    }    
-};  
-
-
+#if defined(ICUB_MEC_V1) | defined(ICUB_MEC_V2)
 enum {maxboards_V2 = 11};
 static const eOmn_serv_configuration_t * const s_serv_config_mc_V2[maxboards_V2] =
 {   // there are at most 11 ems boards. only board eb10 and eb11 (pos 9 and 10) dont have mc.
@@ -2130,7 +2156,10 @@ static const eOmn_serv_configuration_t * const s_serv_config_mc_V2[maxboards_V2]
     NULL,
     NULL
 };
+#endif
 
+
+#if defined(ICUB_MEC_V3)
 enum {maxboards_V3 = 22};
 static const eOmn_serv_configuration_t * const s_serv_config_mc_V3[maxboards_V3] =
 {   // there are only ....   
@@ -2157,9 +2186,9 @@ static const eOmn_serv_configuration_t * const s_serv_config_mc_V3[maxboards_V3]
     NULL, 
     &s_serv_config_mc_cer_testOfmc2plus // moved at address .22  
 };
+#endif
 
-
-
+#if defined(CER)
 enum {maxboards_CER = 21};
 static const eOmn_serv_configuration_t * const s_serv_config_mc_CER[maxboards_CER] =
 {   // there are only eb15, eb17 and eb21 .   
@@ -2186,7 +2215,7 @@ static const eOmn_serv_configuration_t * const s_serv_config_mc_CER[maxboards_CE
     &s_serv_config_mc_cer_eb21    
 };
 
-
+#endif
 
 // --------------------------------------------------------------------------------------------------------------------
 // - definition (and initialisation) of extern variables
@@ -2221,6 +2250,10 @@ extern const eOemsrunner_timing_t * eoboardconfig_code2ctrlooptiming(uint32_t co
     
     const eOemsrunner_timing_t *ret = &normal;
  
+#if     defined(ICUB_MEC_V1) | defined(ICUB_MEC_V2)    
+    
+  
+    
     switch(code)
     {
         case 1:
@@ -2238,6 +2271,25 @@ extern const eOemsrunner_timing_t * eoboardconfig_code2ctrlooptiming(uint32_t co
     
     }
 
+#elif   defined(ICUB_MEC_V3)
+    switch(code)
+    {
+        case 18: // for left lower leg mec-v3: eb8 10.0.1.19 (reads skin only)
+        case 22: // for right lower leg mec-v3: eb12 10.0.1.23 (reads skin only)
+        {
+            ret = &gateway;
+        } break;
+         
+        default:    
+        {   // all the others
+            ret = &normal;
+        } break;
+    
+    }
+#elif   defined(CER)    
+    // so far there are not gateways in cer
+#endif
+
     return(ret);   
 }
     
@@ -2248,7 +2300,12 @@ extern const eOmn_serv_configuration_t * eoboardconfig_code2motion_serv_configur
 {
     const eOmn_serv_configuration_t * ret = NULL;
 
-#if     defined(ICUB_MEC_V3)
+#if     defined(ICUB_MEC_V1) | defined(ICUB_MEC_V2)   
+    if(code < maxboards_V2)
+    {   // boards from eb1 to eb11
+        ret = s_serv_config_mc_V2[code]; 
+    }    
+#elif   defined(ICUB_MEC_V3)
     if(code < maxboards_V3)
     {   
         ret = s_serv_config_mc_V3[code]; 
@@ -2257,11 +2314,6 @@ extern const eOmn_serv_configuration_t * eoboardconfig_code2motion_serv_configur
     if(code < maxboards_CER)
     {
         ret= s_serv_config_mc_CER[code];
-    }
-#else
-    if(code < maxboards_V2)
-    {   // boards from eb1 to eb11
-        ret = s_serv_config_mc_V2[code]; 
     }
 #endif    
 
@@ -2273,15 +2325,8 @@ extern const eOmn_serv_configuration_t * eoboardconfig_code2strain_serv_configur
 {
     const eOmn_serv_configuration_t * ret = NULL;
 
-#if     defined(ICUB_MEC_V3) 
-    switch(code)
-    {
-        default:    
-        {   // currently all our boards haven't strain
-            ret = NULL;
-        } break;
-    }
-#else 
+
+#if     defined(ICUB_MEC_V1) | defined(ICUB_MEC_V2)     
     switch(code)
     {
         case 0:
@@ -2304,71 +2349,70 @@ extern const eOmn_serv_configuration_t * eoboardconfig_code2strain_serv_configur
         } break; 
 #endif  
 
-//#if     defined(CER)   
-//#error -> if CER board 10.0.1.15 has a strain keep code. if not remove it. then remove error pragma, committ and push.     
-//        case 14:
-//        {   // CER board eb15: has a strain ... 
-//            ret = &s_serv_config_as_strain_eb1_eb3; 
-//        } break;          
-//#endif
-        
         default:    
         {   // all the others
             ret = NULL;
         } break;
     
     }
+#elif   defined(ICUB_MEC_V3)
+    // so far not supported
+#elif   defined(CER)    
+    // so far not supported
 #endif
+    
     return(ret);        
 }
 
 
-// ok, verified by marco.accame on 30dec15
 extern const eOmn_serv_configuration_t * eoboardconfig_code2mais_serv_configuration(uint32_t code)
 {
     const eOmn_serv_configuration_t * ret = NULL;
     
+#if     defined(ICUB_MEC_V1) | defined(ICUB_MEC_V2)      
     switch(code)
     {
         case 1:
         case 3:
-#if     defined(ICUB_MEC_V3)              
+        {   
+            ret = &s_serv_config_as_mais; 
+        } break;  
+
+        default:    
+        {   // all the others
+            ret = NULL;
+        } break;   
+    }
+#elif   defined(ICUB_MEC_V3)
+    
+    switch(code)
+    {
         case 7:    // for left lower arm mec-v3: 1b3 10.0.1.8            
         case 8:    // for left lower arm mec-v3: 1b4 10.0.1.9
         case 12:   // for right lower arm mec-v3: 2b3 10.0.1.13            
         case 13:   // for right lower arm mec-v3: 2b4 10.0.1.14     
-#endif            
-        {   // board eb2 / eb4   
-            ret = &s_serv_config_as_mais_eb2_eb4; 
+        { 
+            ret = &s_serv_config_as_mais; 
         } break;  
 
         default:    
         {   // all the others
             ret = NULL;
         } break;
-    
     }
+#elif   defined(CER)    
+    // so far not supported
+#endif
 
     return(ret);        
 }
 
-// ok, verified by marco.accame on 30dec15
+
 extern const eOmn_serv_configuration_t * eoboardconfig_code2skin_serv_configuration(uint32_t code)
 {
     const eOmn_serv_configuration_t * ret = NULL;
     
-//    /////#warning --> rimuovo la skin per debug sul viola che ha problemi sul can2 della eb2
-//    return(NULL);
-#if     defined(ICUB_MEC_V3) 
-    switch(code)
-    {
-        default:    
-        {   // currently all our boards haven't skin
-            ret = NULL;
-        } break;
-    }
-#else 
-    
+#if     defined(ICUB_MEC_V1) | defined(ICUB_MEC_V2)       
     switch(code)
     {
         case 1:
@@ -2389,18 +2433,21 @@ extern const eOmn_serv_configuration_t * eoboardconfig_code2skin_serv_configurat
         } break;
     
     }
+#elif   defined(ICUB_MEC_V3)
+    // so far not supported
+#elif   defined(CER)    
+    // so far not supported
 #endif
+    
     return(ret);        
 }
 
-// ok, verified by marco.accame on 07jan16
+
 extern const eOmn_serv_configuration_t * eoboardconfig_code2inertials_serv_configuration(uint32_t code)
 {
     const eOmn_serv_configuration_t * ret = NULL;
 
-//    /////#warning --> rimuovo inerziali per debug sul viola che ha problemi sul can2 della eb2
-//    return(NULL);
-    
+#if     defined(ICUB_MEC_V1) | defined(ICUB_MEC_V2)   
     switch(code)
     {
         case 1:
@@ -2421,6 +2468,11 @@ extern const eOmn_serv_configuration_t * eoboardconfig_code2inertials_serv_confi
         } break;
     
     }
+#elif   defined(ICUB_MEC_V3)
+    // so far not supported
+#elif   defined(CER)    
+    // so far not supported
+#endif
 
     return(ret);        
 }

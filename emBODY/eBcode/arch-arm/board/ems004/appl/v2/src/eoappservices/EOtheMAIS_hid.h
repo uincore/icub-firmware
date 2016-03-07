@@ -38,6 +38,7 @@
 
 // - definition of the hidden struct implementing the object ----------------------------------------------------------
 
+enum { mais_maxRegulars = 2 }; // there cannot be more than 1 mais, and typically not more than 1 signalled variable.
 
 struct EOtheMAIS_hid
 {
@@ -47,6 +48,7 @@ struct EOtheMAIS_hid
     
     eOprotID32_t                            id32;  
     eOas_mais_t*                            mais;    
+    EOarray*                                id32ofregulars;    
 }; 
 
 

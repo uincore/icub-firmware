@@ -879,9 +879,19 @@ void MController_update_motor_odometry_fbk_can(int m, void* data)
     Motor_update_odometry_fbk_can(smc->motor+m, data);
 }
 
+void MController_motor_raise_fault_i2t(int m)
+{
+    Motor_raise_fault_i2t(smc->motor+m);
+}
+
 void MController_motor_raise_fault_overcurrent(int m)
 {
     Motor_raise_fault_overcurrent(smc->motor+m);
+}
+
+void MController_motor_raise_fault_external(int m)
+{
+    Motor_raise_fault_external(smc->motor+m);
 }
 
 BOOL MController_motor_is_external_fault(int m)

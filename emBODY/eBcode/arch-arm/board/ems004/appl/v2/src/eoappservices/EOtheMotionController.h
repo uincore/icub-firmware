@@ -94,6 +94,8 @@ extern eOresult_t eo_motioncontrol_Deactivate(EOtheMotionController *p);
 // to be called once before to be ticked
 extern eOresult_t eo_motioncontrol_Start(EOtheMotionController *p);
 
+extern eOresult_t eo_motioncontrol_SetRegulars(EOtheMotionController *p, eOmn_serv_arrayof_id32_t* arrayofid32, uint8_t* numberofthem);
+
 // it ticks every ms of the control-loop
 extern eOresult_t eo_motioncontrol_Tick(EOtheMotionController *p);
 
@@ -126,9 +128,8 @@ extern int16_t eo_motioncontrol_extra_GetSuppliedVoltage(EOtheMotionController *
 // others, one make by marco.accame which groups actions
 
 // why dont we put it inside _Tick() ????
-#ifdef INCLUDE_NEVER_REFERENCED
 extern eOresult_t eo_motioncontrol_extra_ManageEXTfault(EOtheMotionController *p);
-#endif
+
 
 
 

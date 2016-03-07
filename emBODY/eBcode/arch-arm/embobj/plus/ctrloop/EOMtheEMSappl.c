@@ -695,6 +695,27 @@ static void s_eom_emsappl_OnError(eOerrmanErrorType_t errtype, const char *info,
     if(emsapplcfg->errmng_haltrace_enabled)
     {
         char strdes[64] = {0};
+        uint64_t tt = eov_sys_LifeTimeGet(eov_sys_GetHandle());
+        uint32_t sec = tt/(1000*1000);
+        uint32_t tmp = tt%(1000*1000);
+        uint32_t msec = tmp / 1000;
+        uint32_t usec = tmp % 1000;
+        
+        if(NULL == des)
+        {   // it is a trace
+            
+            if(NULL != info)
+            {
+                snprintf(str, sizeof(str), "[TRACE] %s @s%dm%du%d: %s -> %s.", eobjstr, sec, msec, usec, err, info); 
+            }
+            else
+            {
+                snprintf(str, sizeof(str), "[TRACE] %s @s%dm%du%d: %s.", eobjstr, sec, msec, usec, err); 
+            }
+            hal_trace_puts(str);
+            return;            
+        }
+        
         if(NULL != des)
         {
             snprintf(strdes, sizeof(strdes), "code 0x%x, p16 0x%04x, p64 0x%016llx, dev %d, adr %d", des->code, des->par16, des->par64, des->sourcedevice, des->sourceaddress);
@@ -705,10 +726,6 @@ static void s_eom_emsappl_OnError(eOerrmanErrorType_t errtype, const char *info,
         }
         else
         {
-            uint64_t tt = eov_sys_LifeTimeGet(eov_sys_GetHandle());
-            uint32_t sec = tt/(1000*1000);
-            uint32_t msec = tt%(1000*1000);
-            msec /= 1000;
             snprintf(str, sizeof(str), "EOMtheEMSerror: [eobj: %s, tsk: %d @s%dm%d] %s %s: no info", eobjstr, taskid, sec, msec, err, strdes);  
         }
         // i dont care is trace is interrupted ... thus NO MUTEX in here
@@ -755,7 +772,7 @@ static void s_eom_emsappl_OnError(eOerrmanErrorType_t errtype, const char *info,
     
 
     
-    ///////#warning --> marco.accame: in case of fatal error, shall we: (1) go smoothly to error state, (2) force immediate transition to error state?
+    //#warning --> marco.accame: in case of fatal error, shall we: (1) go smoothly to error state, (2) force immediate transition to error state?
     
     // if in here tehre is a serious error. but we dont care about concurrency
     //osal_mutex_take(s_emsappl_singleton.onerrormutex, osal_reltimeINFINITE);    
@@ -893,7 +910,7 @@ extern void eo_cfg_sm_EMSappl_hid_on_entry_RUN(EOsm *s)
 
 extern void eo_cfg_sm_EMSappl_hid_on_exit_RUN(EOsm *s)
 {
-    ///////#warning --> it is good thing to attempt to stop the hal timers in here as well. see comment below.
+    //#warning --> it is good thing to attempt to stop the hal timers in here as well. see comment below.
     // marco.accame: if we exit from the runner in an un-expected way with a fatal error, then we dont 
     // stop teh timers smoothly. thus we do it in here as well.
     

@@ -133,11 +133,11 @@ extern EOtheCANservice * eo_canserv_Initialise(const eOcanserv_cfg_t *cfg)
     
     if(eores_OK != s_eo_canserv_peripheral_init(&s_eo_canserv_singleton))
     {
-//        /////#warning --> put diagnostics .... maybe return NULL
+//        #warning --> put diagnostics .... maybe return NULL
     }
     else if(eores_OK != s_eo_canserv_otherdata_init(&s_eo_canserv_singleton))
     {  
-//        /////#warning --> put diagnostics .... maybe return NULL
+//        #warning --> put diagnostics .... maybe return NULL
     }
     else
     {                 
@@ -392,7 +392,7 @@ extern eOresult_t eo_canserv_SendCommandToLocation(EOtheCANservice *p, eOcanprot
     return(s_eo_canserv_SendCommand(p, &descriptor));
 }
 
-///////#warning ---> it is ok for all but for skin .......
+//#warning ---> it is ok for all but for skin .......
 extern eOresult_t eo_canserv_SendCommandToEntity(EOtheCANservice *p, eOcanprot_command_t *command, eOprotID32_t id32)
 {
     if((NULL == p) || (NULL == command))
@@ -405,7 +405,7 @@ extern eOresult_t eo_canserv_SendCommandToEntity(EOtheCANservice *p, eOcanprot_c
    
     if(eores_OK != eo_canmap_GetEntityLocation(eo_canmap_GetHandle(), id32, &descriptor.loc, NULL, NULL))
     {   // error ...
-//        /////#warning --> put diagnostics
+//        #warning --> put diagnostics
         return(eores_NOK_generic);
     }
     
@@ -456,7 +456,7 @@ extern eOresult_t eo_canserv_SendCommandToAllBoardsInEntity(EOtheCANservice *p, 
     uint8_t numoflocs = 0;
     if(eores_OK != eo_canmap_GetEntityLocation(eo_canmap_GetHandle(), id32, &descriptor.loc, &numoflocs, NULL))
     {   // error ...
-//        /////#warning --> put diagnostics
+//        #warning --> put diagnostics
         return(eores_NOK_generic);
     }
     
@@ -654,7 +654,7 @@ static void s_eo_canserv_onerror_can(void *arg)
     uint32_t n = (uint32_t)arg;
     hal_can_port_t port = (hal_can_port_t)n; // either hal_can_port1 or hal_can_port2
     port = port;
-//    /////#warning TODO: add whatever is needed by can error
+//    #warning TODO: add whatever is needed by can error
 }
 
 

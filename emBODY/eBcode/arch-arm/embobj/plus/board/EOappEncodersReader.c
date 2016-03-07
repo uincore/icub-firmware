@@ -794,7 +794,7 @@ static eObool_t s_eo_prepare_SPI_streams(EOappEncReader *p)
 
 static void s_eo_deconfigure_SPI_encoders(EOappEncReader *p)
 {
-    /////#warning TODO: make some tests about initting and deinitting hal etc.
+    #warning TODO: make some tests about initting and deinitting hal etc.
         
     s_eo_appEncReader_deinit_halSPIencoders(p);
         

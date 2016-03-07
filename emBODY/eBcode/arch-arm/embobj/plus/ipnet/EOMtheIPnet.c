@@ -274,8 +274,8 @@ extern EOMtheIPnet * eom_ipnet_Initialise(const eOmipnet_cfg_t *ipnetcfg,
 
    
     
-//    /////#warning the mutex mutexactivedgram is used to protect multiple access to the activedgramlist.
-//    /////#warning but it may be not needed. the caller is unique (protected by another mutex) and the ipnet use the list only when the caller is waiting for its action
+//    #warning the mutex mutexactivedgram is used to protect multiple access to the activedgramlist.
+//    #warning but it may be not needed. the caller is unique (protected by another mutex) and the ipnet use the list only when the caller is waiting for its action
     // i get a basic ip net with proper osal mutex and attach and detach functions which are proper for rtos
     s_eom_theipnet.ipnet = eov_ipnet_hid_Initialise(dtgskcfg->numberofsockets, NULL, //eom_mutex_New(), 
                                                     s_eom_ipnet_AttachSocket, 

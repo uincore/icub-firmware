@@ -87,6 +87,8 @@ static eOsk_skin_t* s_eo_skin_get_entity(EOtheSKIN* p, eOcanframe_t *frame, eOca
 
 static eObool_t s_eo_skin_activeskin_can_accept_canframe(void);
     
+static eObool_t s_eo_skin_isID32relevant(uint32_t id32);
+    
 // --------------------------------------------------------------------------------------------------------------------
 // - definition (and initialisation) of static variables
 // --------------------------------------------------------------------------------------------------------------------
@@ -125,7 +127,8 @@ static EOtheSKIN s_eo_theskin =
     .numofskinpatches           = 0,
     .numofmtbs                  = 0,    
     .rxdata                     = { NULL },
-    .skinpatches                = { NULL }
+    .skinpatches                = { NULL },
+    .id32ofregulars             = NULL
 };
 
 static const char s_eobj_ownname[] = "EOtheSKIN";
@@ -165,6 +168,8 @@ extern EOtheSKIN* eo_skin_Initialise(void)
         p->rxdata[i] = eo_vector_New(sizeof(eOsk_candata_t), 64, NULL, NULL, NULL, NULL); 
     }
     
+    p->id32ofregulars = eo_array_New(skin_maxRegulars, sizeof(uint32_t), NULL);
+        
     p->diagnostics.reportTimer = eo_timer_New();
     p->diagnostics.errorType = eo_errortype_error;
     p->diagnostics.errorDescriptor.sourceaddress = eo_errman_sourcedevice_localboard;
@@ -352,6 +357,8 @@ extern eOresult_t eo_skin_Deactivate(EOtheSKIN *p)
         eo_skin_Stop(p);
     }
         
+    eo_skin_SetRegulars(p, NULL, NULL);
+        
     eo_canmap_DeconfigEntity(eo_canmap_GetHandle(), eoprot_endpoint_skin, eoprot_entity_sk_skin, p->sharedcan.entitydescriptor); 
     
     eo_canmap_UnloadBoards(eo_canmap_GetHandle(), p->sharedcan.boardproperties);
@@ -515,6 +522,22 @@ extern eOresult_t eo_skin_Start(EOtheSKIN *p)
 }
 
 
+extern eOresult_t eo_skin_SetRegulars(EOtheSKIN *p, eOmn_serv_arrayof_id32_t* arrayofid32, uint8_t* numberofthem)
+{
+    if(NULL == p)
+    {
+        return(eores_NOK_nullpointer);
+    }
+    
+    if(eobool_false == p->service.active)
+    {   // nothing to do because object must be first activated
+        return(eores_OK);
+    }  
+    
+    return(eo_service_hid_SetRegulars(p->id32ofregulars, arrayofid32, s_eo_skin_isID32relevant, numberofthem));
+}
+
+
 extern eOresult_t eo_skin_Stop(EOtheSKIN *p)
 {
     if(NULL == p)
@@ -537,6 +560,20 @@ extern eOresult_t eo_skin_Stop(EOtheSKIN *p)
     p->service.running = eobool_false;
     p->service.state = eomn_serv_state_activated; 
     eo_service_hid_SynchServiceState(eo_services_GetHandle(), eomn_serv_category_skin, p->service.state);    
+    
+    
+    // reset the various buffers
+    for(uint8_t i=0; i<p->numofskinpatches; i++)
+    {
+        EOarray *array = (EOarray*) (&p->skinpatches[i]->status.arrayofcandata);
+        EOvector *vector = (EOvector*) p->rxdata[i];
+        
+        eo_array_Reset(array);
+        eo_vector_Clear(vector);        
+    }
+    
+    // remove all regulars related to skin entity ... no, dont do that
+    //eo_skin_SetRegulars(p, NULL, NULL);
     
     return(eores_OK);    
 }
@@ -705,7 +742,7 @@ extern eOresult_t eo_skin_SetMode(EOtheSKIN *p, uint8_t patchindex, eOsk_sigmode
             errdes.par64            = 0;
             eo_errman_Error(eo_errman_GetHandle(), eo_errortype_warning, NULL, s_eobj_ownname, &errdes);   
             
-//            /////#warning TBD: VERY IMPORTANT -> see the following code, where we need also a special message to board with address 0xE
+//            #warning TBD: VERY IMPORTANT -> see the following code, where we need also a special message to board with address 0xE
 //
 //            for(i=skconfig_ptr->boardAddrStart; i<boardEndAddr; i++)
 //            {
@@ -1022,7 +1059,7 @@ static eOresult_t s_eo_skin_TXstop(EOtheSKIN *p)
             continue;
         }
          
-        ///////#warning marco.accame: see if we can remove it .....
+        //#warning marco.accame: see if we can remove it .....
         // if we are in here it means that robotinterface has activated the skin after that the verify() was done succesfully
         // thus, we can remove the continue. BUT who cares t send the silence command or not if the patch is already silent ....
         if(eosk_sigmode_dontsignal == skin->config.sigmode)
@@ -1200,6 +1237,18 @@ static void s_eo_skin_send_periodic_error_report(void *par)
     {
         eo_timer_Stop(p->diagnostics.reportTimer);
     }
+}
+
+static eObool_t s_eo_skin_isID32relevant(uint32_t id32)
+{
+    static const uint32_t mask0 = (((uint32_t)eoprot_endpoint_skin) << 24) | (((uint32_t)eoprot_entity_sk_skin) << 16);
+    
+    if((id32 & mask0) == mask0)
+    {
+        return(eobool_true);
+    }
+    
+    return(eobool_false); 
 }
 
 // --------------------------------------------------------------------------------------------------------------------

@@ -1074,7 +1074,7 @@ extern void eoprot_fun_UPDT_mc_joint_cmmnds_calibration(const EOnv* nv, const eO
     //             if((pos > INT16_MAX) || (pos < INT16_MIN))
     //             {
     //                 return;
-    //                 /////#warning VALE --> how to manage this error???
+    //                 #warning VALE --> how to manage this error???
     //             }
     //             iCubCanProtCalibrator.params.type4.position = (icubCanProto_position4calib_t)pos; 
     //            iCubCanProtCalibrator.params.type4.velocity = eo_measconv_jntVelocity_toCAN(mc4boards, jxx, calibrator->params.type4.velocity);            
@@ -1246,7 +1246,7 @@ extern void eoprot_fun_UPDT_mc_motor_config_rotorencoder(const EOnv* nv, const e
 }
 
 #if defined(EOMOTIONCONTROL_DONTREDEFINE_JOINTCOUPLING_CALLBACK)
-/////#warning INFO: EOMOTIONCONTROL_DONTREDEFINE_JOINTCOUPLING_CALLBACK is defined, thus we are not using eo_emsController_set_Jacobian() etc
+#warning INFO: EOMOTIONCONTROL_DONTREDEFINE_JOINTCOUPLING_CALLBACK is defined, thus we are not using eo_emsController_set_Jacobian() etc
 #else
 // f-marker-begin
 extern void eoprot_fun_UPDT_mc_controller_config_jointcoupling(const EOnv* nv, const eOropdescriptor_t* rd)
@@ -1275,7 +1275,7 @@ extern void eoprot_fun_UPDT_mc_controller_config_jointcoupling(const EOnv* nv, c
         
         eo_emsController_set_Jacobian(*mat);
             
-        /////#warning --> marco.accame: put in here the debug messages for jointcoupling (and then remove them)
+        #warning --> marco.accame: put in here the debug messages for jointcoupling (and then remove them)
             
         eOerrmanDescriptor_t errdes = {0};
         errdes.code                 = eoerror_code_get(eoerror_category_Debug, eoerror_value_DEB_tag00);
@@ -1310,7 +1310,7 @@ extern void eoprot_fun_UPDT_mc_motor_config(const EOnv* nv, const eOropdescripto
     eOcanprot_command_t command = {0};
     command.class = eocanprot_msgclass_pollingMotorControl;
     
-    /////#warning marco.accame: the code for ems and mc4plus is sligthly different .... what it correct?
+    #warning marco.accame: the code for ems and mc4plus is sligthly different .... what it correct?
         
     if(eo_motcon_mode_foc == mcmode)
     {
@@ -1429,7 +1429,7 @@ extern void eoprot_fun_UPDT_mc_motor_config_currentlimits(const EOnv* nv, const 
         command.value = &curr;
         eo_canserv_SendCommandToEntity(eo_canserv_GetHandle(), &command, rd->id32);
         // TODOALE
-        /////#warning TODO: ALE should add in here a function for updating maxcurrent of motor value inside the controller
+        #warning TODO: ALE should add in here a function for updating maxcurrent of motor value inside the controller
     }
     else if((eo_motcon_mode_mc4plus == mcmode) || (eo_motcon_mode_mc4plusmais == mcmode))
     {
