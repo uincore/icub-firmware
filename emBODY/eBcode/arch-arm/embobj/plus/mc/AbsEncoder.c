@@ -57,7 +57,8 @@ void AbsEncoder_init(AbsEncoder* o)
     
     o->spike_cnt = 0;
     
-    o->faults.fault_mask = FALSE;
+    o->fault_state.bitmask = 0;
+    o->diagnostics_refresh = 0;
     
     o->valid_first_data_cnt = 0;
     
@@ -174,7 +175,7 @@ void AbsEncoder_timeout(AbsEncoder* o)
         ++o->timeout_cnt;
     }
     
-    o->faults.fault_bits.data_notready = TRUE;
+    o->fault_state.bits.data_notready = TRUE;
     
     o->valid_first_data_cnt = 0;
 }
@@ -198,10 +199,10 @@ void AbsEncoder_invalid(AbsEncoder* o, hal_spiencoder_errors_flags error_flags)
         ++o->invalid_cnt;
     }
     
-    if (error_flags.data_error)    o->faults.fault_bits.data_error = TRUE;
-    if (error_flags.tx_error)      o->faults.fault_bits.tx_error   = TRUE;
-    if (error_flags.chip_error)    o->faults.fault_bits.chip_error = TRUE;
-    if (error_flags.data_notready) o->faults.fault_bits.chip_error = TRUE;
+    if (error_flags.data_error)    o->fault_state.bits.data_error = TRUE;
+    if (error_flags.tx_error)      o->fault_state.bits.tx_error   = TRUE;
+    if (error_flags.chip_error)    o->fault_state.bits.chip_error = TRUE;
+    if (error_flags.data_notready) o->fault_state.bits.chip_error = TRUE;
         
     o->valid_first_data_cnt = 0;
 }
@@ -279,7 +280,7 @@ int32_t AbsEncoder_update(AbsEncoder* o, int16_t position)
                 
             if (o->spike_cnt > o->spike_cnt_limit)
             {
-                o->faults.fault_bits.spikes = TRUE;
+                o->fault_state.bits.spikes = TRUE;
                 o->hardware_fault = TRUE;
             }
             
@@ -316,7 +317,30 @@ BOOL AbsEncoder_is_calibrated(AbsEncoder* o)
 }
 
 BOOL AbsEncoder_is_in_fault(AbsEncoder* o)
-{      
+{
+    if (++o->diagnostics_refresh > 5*CTRL_LOOP_FREQUENCY_INT)
+    {
+        o->diagnostics_refresh = 0;
+        o->fault_state.bitmask = 0;
+    }
+    
+    if (o->hardware_fault)
+    {
+        uint8_t tx_error      :1;
+        uint8_t data_error    :1;
+        uint8_t data_notready :1;
+        uint8_t chip_error    :1;    
+        uint8_t spikes        :1;
+        
+        static eOerrmanDescriptor_t descriptor = {0};
+        descriptor.par16 = o->ID;
+        descriptor.par64 = 0;
+        descriptor.sourcedevice = eo_errman_sourcedevice_localboard;
+        descriptor.sourceaddress = 0;
+        descriptor.code = eoerror_code_get(eoerror_category_MotionControl, eoerror_value_MC_axis_torque_sens);
+        eo_errman_Error(eo_errman_GetHandle(), eo_errortype_error, NULL, NULL, &descriptor);
+    }
+    
     return o->hardware_fault;
 }
 
@@ -324,7 +348,7 @@ void AbsEncoder_clear_faults(AbsEncoder* o)
 {
     o->hardware_fault = FALSE;
     
-    o->faults.fault_mask = FALSE;
+    o->fault_state.bitmask = 0;
     
     o->invalid_cnt = 0;
     o->timeout_cnt = 0;

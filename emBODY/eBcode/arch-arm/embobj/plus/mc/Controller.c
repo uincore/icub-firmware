@@ -374,7 +374,7 @@ void MController_config_board(uint8_t part_type, uint8_t actuation_type)
             o->absEncoder
         );
         
-        o->jointSet[s].led = hal_led1 + s;
+        o->jointSet[s].led = (hal_led_t)(hal_led1 + s);
     }
 }
 
@@ -382,7 +382,7 @@ void MController_config_joint(int j, eOmc_joint_config_t* config) //
 {
     MController *o = smc;
     
-    Joint_config(o->joint+j, config);
+    Joint_config(o->joint+j, j, config);
     
     // TODOALE move to motor config
     Motor_config_trqPID(o->motor+j, &(config->pidtorque));

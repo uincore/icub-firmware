@@ -9,10 +9,20 @@
 #include "Trajectory.h"
 #include "WatchDog.h"
 
-#define DEFAULT_WATCHDOG_TIME_MSEC 50
+typedef union
+{
+    struct
+    {
+        uint8_t torque_sensor_timeout:1;
+    } bits;
+        
+    uint8_t bitmask;
+} JointFaultState;
 
 typedef struct // Joint
 {
+    uint8_t ID;
+    
     PID posPID;
     
     CTRL_UNITS pos_min;
@@ -71,14 +81,15 @@ typedef struct // Joint
     BOOL trq_control_active;
     BOOL CAN_DO_TRQ_CTRL;
     
-    uint32_t fault_state_mask;
+    JointFaultState fault_state;
+    uint16_t diagnostics_refresh;
 } Joint;
 
 extern Joint* Joint_new(uint8_t n);
 extern void Joint_init(Joint* o);
 extern void Joint_destroy(Joint* o);
 
-extern void Joint_config(Joint* o, eOmc_joint_config_t* config);
+extern void Joint_config(Joint* o, uint8_t ID, eOmc_joint_config_t* config);
 
 extern void Joint_motion_reset(Joint *o);
 

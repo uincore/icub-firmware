@@ -204,11 +204,28 @@ BOOL JointSet_do_check_faults(JointSet* o)
     
     for (int k=0; k<N; ++k)
     {
-        if (Joint_check_faults(o->joint+o->joints_of_set[k])) fault = TRUE;
+        if (Joint_check_faults(o->joint+o->joints_of_set[k]))
+        {
+            fault = TRUE;
+        }
         
-        if (Motor_check_faults(o->motor+o->motors_of_set[k])) fault = TRUE;
+        if (Motor_check_faults(o->motor+o->motors_of_set[k]))
+        {
+            fault = TRUE;
+            
+            // TODOALE
+            // traditional confusion among joints, motors and encoders: I don't like it
+            o->joint[o->joints_of_set[k]].control_mode = eomc_controlmode_hwFault;
+        }
         
-        if (AbsEncoder_is_in_fault(o->absEncoder+o->encoders_of_set[k])) fault = TRUE;
+        if (AbsEncoder_is_in_fault(o->absEncoder+o->encoders_of_set[k]))
+        {
+            fault = TRUE;
+            
+            // TODOALE
+            // traditional confusion among joints, motors and encoders: I don't like it
+            o->joint[o->joints_of_set[k]].control_mode = eomc_controlmode_hwFault;
+        }
     }
     
     if (fault)
@@ -337,8 +354,6 @@ BOOL JointSet_set_control_mode(JointSet* o, eOmc_controlmode_command_t control_m
         { 
             Motor_motion_reset(o->motor+o->motors_of_set[k]);
             Joint_motion_reset(o->joint+o->joints_of_set[k]);
-            //Motor_trq_ctrl_turn_on(o->motor+o->motors_of_set[k]);
-            //Joint_trq_ctrl_turn_on(o->joint+o->joints_of_set[k]);
             
             Motor_set_run(o->motor+o->motors_of_set[k]);
             Joint_set_control_mode(o->joint+o->joints_of_set[k], control_mode);

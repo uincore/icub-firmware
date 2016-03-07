@@ -10,6 +10,22 @@
 /////////////////////////////////////////////////////////
 // AbsEncoder
 
+typedef union
+{
+    struct
+    {
+        uint8_t tx_error      :1;
+        uint8_t data_error    :1;
+        uint8_t data_notready :1;
+        uint8_t chip_error    :1;
+            
+        uint8_t spikes        :1;
+        uint8_t unused        :3;
+    } bits;
+        
+    uint8_t bitmask;
+} EncoderFaultState;
+
 typedef struct //AbsEncoder
 {
     int32_t distance;
@@ -50,22 +66,8 @@ typedef struct //AbsEncoder
         uint8_t not_ready;
     } state;
     
-    union
-    {
-        struct
-        {
-            uint8_t tx_error      :1;
-            uint8_t data_error    :1;
-            uint8_t data_notready :1;
-            uint8_t chip_error    :1;
-            
-            uint8_t spikes        :1;
-            uint8_t unused        :3;
-        } fault_bits;
-        
-        uint8_t fault_mask;
-        
-    } faults;
+    EncoderFaultState fault_state;
+    uint16_t diagnostics_refresh;
     
 } AbsEncoder;
 

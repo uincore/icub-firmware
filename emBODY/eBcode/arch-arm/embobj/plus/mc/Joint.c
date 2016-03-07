@@ -2,6 +2,9 @@
 
 #include "EOtheCANprotocol.h"
 
+#include "EOtheErrorManager.h"
+#include "EoError.h"
+
 static void Joint_set_inner_control_flags(Joint* o);
 
 Joint* Joint_new(uint8_t n)
@@ -82,11 +85,16 @@ void Joint_init(Joint* o)
     
     o->pushing_limit = FALSE;
     
+    o->fault_state.bitmask = 0;
+    o->diagnostics_refresh = 0;
+    
     //SpeedController_init(o->speedController);
 }
 
-void Joint_config(Joint* o, eOmc_joint_config_t* config)
+void Joint_config(Joint* o, uint8_t ID, eOmc_joint_config_t* config)
 {
+    o->ID = ID;
+    
     PID_config(&o->posPID, &config->pidposition);
     
     o->scKpos   = config->pidposition.kp;
@@ -240,6 +248,12 @@ BOOL Joint_check_faults(Joint* o)
 {
     BOOL fault = FALSE; 
     
+    if (++o->diagnostics_refresh > 5*CTRL_LOOP_FREQUENCY_INT)
+    {
+        o->diagnostics_refresh = 0;
+        o->fault_state.bitmask = 0;
+    }
+    
     if (WatchDog_check_expired(&o->trq_fbk_wdog))
     {
         o->trq_fbk = ZERO;
@@ -248,6 +262,21 @@ BOOL Joint_check_faults(Joint* o)
         
         if (o->trq_control_active)
         {
+            if (!o->fault_state.bits.torque_sensor_timeout)
+            {
+                o->fault_state.bits.torque_sensor_timeout = TRUE;
+                
+                static eOerrmanDescriptor_t descriptor = {0};
+                descriptor.par16 = o->ID;
+                descriptor.par64 = 0;
+                descriptor.sourcedevice = eo_errman_sourcedevice_localboard;
+                descriptor.sourceaddress = 0;
+                descriptor.code = eoerror_code_get(eoerror_category_MotionControl, eoerror_value_MC_axis_torque_sens);
+                eo_errman_Error(eo_errman_GetHandle(), eo_errortype_error, NULL, NULL, &descriptor);
+            }
+        
+            o->control_mode = eomc_controlmode_hwFault;
+            
             fault = TRUE;
         }
     }
@@ -257,7 +286,7 @@ BOOL Joint_check_faults(Joint* o)
  
 extern void Joint_clear_faults(Joint* o)
 {
-    o->fault_state_mask = 0;
+    o->fault_state.bitmask = 0;
 }
 
 int8_t Joint_check_limits(Joint* o)
