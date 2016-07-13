@@ -202,6 +202,8 @@ typedef struct //Motor
     // 2FOC specific data
     WatchDog can_2FOC_alive_wdog;
     uint8_t can_motor_config[6];
+    
+    int8_t outoflimits;
 
 } Motor;
 

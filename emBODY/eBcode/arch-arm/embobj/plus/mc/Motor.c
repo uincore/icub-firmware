@@ -215,6 +215,8 @@ void Motor_init(Motor* o) //
     WatchDog_init(&o->can_2FOC_alive_wdog);
     
     Motor_hardStopCalbData_reset(o);
+    
+    o->outoflimits = 0;
 }
 
 void Motor_config(Motor* o, uint8_t ID, eOmc_motor_config_t* config) //
@@ -777,18 +779,20 @@ void Motor_actuate(Motor* motor, uint8_t N) //
 
 // Motor
 /////////////////////////////////////////////////////////
-
 void Motor_set_pwm_ref(Motor* o, int32_t pwm_ref)
 {
-    if (o->pos_min != o->pos_max)
+     int8_t outoflimits_aux = 0;
+    if ( (o->pos_min != o->pos_max) && (!o->not_calibrated))
     {        
         if ((o->pos_fbk < o->pos_min) && (pwm_ref < 0))
         {
             o->output = o->pwm_ref = 0;
+            outoflimits_aux = -1;
         }
         else if ((o->pos_fbk > o->pos_max) && (pwm_ref > 0))
         {
             o->output = o->pwm_ref = 0;
+            outoflimits_aux = 1;
         }
         else
         {
@@ -798,6 +802,14 @@ void Motor_set_pwm_ref(Motor* o, int32_t pwm_ref)
     else
     {
         o->output = o->pwm_ref = CUT(pwm_ref, o->pwm_max);
+    }
+    
+    if(o->outoflimits != outoflimits_aux)
+    {
+        char message[100];
+        snprintf(message, sizeof(message), "m outoflim! %d cp=%d m=%d mx=%d", outoflimits_aux, o->pos_fbk, o->pos_min, o->pos_max );
+        send_debug_message(message, o->ID, 0, 0);
+        o->outoflimits = outoflimits_aux;
     }
 }
 
@@ -877,7 +889,7 @@ void Motor_get_state(Motor* o, eOmc_motor_status_t* motor_status)
     //motor_status->basic.mot_position = o->pos_fbk;
     //motor_status->basic.mot_velocity = o->vel_fbk;
 
-    motor_status->basic.mot_acceleration = 0; // not implemented  
+    motor_status->basic.mot_acceleration = o->pos_fbk; //0; // not implemented  
     
     motor_status->basic.mot_current  = o->Iqq_fbk; //o->Iqq_peak_fbk;    
     motor_status->basic.mot_pwm      = o->pwm_fbk;
